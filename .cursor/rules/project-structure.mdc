@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Crisis Agent Project Structure Guide
+
+## Overview
+This is a crisis response intelligent agent system that integrates with Gaode Maps (高德地图) services through MCP (Model Context Protocol).
+
+## Main Entry Point
+The intelligent agent entry point is [agent.py](mdc:agent.py), which contains the core logic for the crisis response agent.
+
+## Backend Services
+
+### MCP Backend - Gaode Maps Service
+The [mcp-backend/](mdc:mcp-backend) directory contains the Gaode Maps MCP service implementation:
+- **Main Server**: [mcp-backend/server.js](mdc:mcp-backend/server.js) - Node.js server providing Gaode Maps integration
+- **Configuration**: [mcp-backend/package.json](mdc:mcp-backend/package.json) - Node.js dependencies and scripts
+- **Documentation**: [mcp-backend/README.md](mdc:mcp-backend/README.md) - Detailed service documentation
+
+## Configuration and Dependencies
+- **Python Dependencies**: [requirements.txt](mdc:requirements.txt) - Python package requirements
+- **Environment Setup**: [env.example](mdc:env.example) - Environment variables template
+- **Project Documentation**: [README.md](mdc:README.md) - Main project documentation
+
+## Testing and Examples
+- **Connection Testing**: [test_connection.py](mdc:mcp:test_connection.py) - Tests for service connectivity
+- **Secondary Connection Test**: [test_connect2.py](mdc:mcp:test_connect2.py) - Additional connection tests
+- **Usage Examples**: [examples.py](mdc:mcp:examples.py) - Code examples and demonstrations
+
+## Development Workflow
+1. Start with [agent.py](mdc:mcp:agent.py) for the main intelligent agent functionality
+2. The agent communicates with the Gaode Maps service via the MCP backend in [mcp-backend/server.js](mdc:mcp:mcp-backend/server.js)
+3. Use the test files to verify connections and functionality
+4. Refer to examples in [examples.py](mdc:mcp:examples.py) for usage patterns
+
+## Key Technologies
+- **Python**: Main agent implementation
+- **Node.js**: MCP backend service
+- **Gaode Maps API**: Geographic and mapping services
+- **MCP (Model Context Protocol)**: Communication between agent and services
