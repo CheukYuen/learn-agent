@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 // 为了兼容性，导入fetch（Node.js 18+已内置）
 const fetch = globalThis.fetch || require('node-fetch');
+require('dotenv').config(); // Ensure dotenv is configured
 const app = express();
 const port = 3000;
 
@@ -19,7 +20,7 @@ class AmapMcpClient {
       // 高德地图MCP服务使用SSE协议，我们直接调用高德地图API
       // 因为MCP SSE协议需要特殊的客户端实现，这里改为直接调用高德API
       const amapApiUrl = 'https://restapi.amap.com/v3/weather/weatherInfo';
-      const apiKey = 'c53a83e2d78a628c652726ba11e88630';
+      const apiKey = process.env.AMAP_API_KEY; // Load from .env
       
       // 首先进行地理编码获取城市adcode
       const geoUrl = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(city)}&key=${apiKey}`;
@@ -106,7 +107,7 @@ class AmapMcpClient {
       console.log(`Calling real Amap geo service for address: ${address}`);
       
       // 直接调用高德地图地理编码API
-      const apiKey = 'c53a83e2d78a628c652726ba11e88630';
+      const apiKey = process.env.AMAP_API_KEY; // Load from .env
       const geoUrl = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&key=${apiKey}`;
       
       const response = await fetch(geoUrl);
