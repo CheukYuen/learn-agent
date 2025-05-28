@@ -4,7 +4,7 @@
 """
 
 import os
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Generator
 import anthropic
 import httpx
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ import time
 import random
 import requests
 import json
+import sys
 
 # 加载环境变量
 load_dotenv()
@@ -151,8 +152,8 @@ class WeatherAgent:
         # 更复杂的提取逻辑可以在这里添加
         return None
         
-    def _make_api_call_with_retry(self, messages, system_prompt, max_retries=3):
-        """带重试机制的API调用"""
+    def _make_api_call_with_retry(self, messages, system_prompt, max_retries=3, stream=False):
+        """带重试机制的API调用，支持流式输出"""
         for attempt in range(max_retries):
             try:
                 response = self.client.messages.create(
@@ -160,9 +161,15 @@ class WeatherAgent:
                     max_tokens=1000,
                     temperature=0.7,
                     system=system_prompt,
-                    messages=messages
+                    messages=messages,
+                    stream=stream
                 )
-                return response.content[0].text
+                
+                if stream:
+                    return response
+                else:
+                    return response.content[0].text
+                    
             except anthropic.InternalServerError as e:
                 if attempt < max_retries - 1:
                     wait_time = (2 ** attempt) + random.uniform(0, 1)  # 指数退避
@@ -177,7 +184,7 @@ class WeatherAgent:
                     time.sleep(wait_time)
                     continue
                 raise e
-        
+    
     def ask(self, question: str, system_prompt: str = "你是一个有用的AI助手，可以查询天气信息。") -> str:
         """
         向智能体提问
@@ -311,6 +318,52 @@ class WeatherAgent:
         except Exception as e:
             return f"未知错误: {type(e).__name__}: {str(e)}"
 
+    def chat_stream(self, messages: list, system_prompt: str = "你是一个有用的AI助手，可以查询天气信息。") -> Generator[str, None, None]:
+        """
+        多轮对话的流式输出版本
+        
+        Args:
+            messages: 对话历史，格式为 [{"role": "user", "content": "..."}, ...]
+            system_prompt: 系统提示词
+            
+        Returns:
+            生成器，产生智能体的回答片段
+        """
+        try:
+            # 检查最后一条用户消息是否涉及天气
+            last_user_message = ""
+            for msg in reversed(messages):
+                if msg.get("role") == "user":
+                    last_user_message = msg.get("content", "")
+                    break
+            
+            if self._is_weather_query(last_user_message):
+                weather_system_prompt = """你是一个专业的天气助手，能够使用 MCP 工具查询天气信息。
+
+当用户询问天气时，你需要：
+1. 根据提供的天气数据为用户展示详细的天气信息
+2. 将查询结果以友好、详细的方式呈现给用户
+3. 包含温度、天气状况、风力等关键信息
+
+请根据对话历史来理解用户的具体需求。"""
+                response = self._make_api_call_with_retry(messages, weather_system_prompt, stream=True)
+            else:
+                response = self._make_api_call_with_retry(messages, system_prompt, stream=True)
+            
+            # 处理流式响应
+            for chunk in response:
+                if chunk.type == "content_block_delta":
+                    yield chunk.delta.text
+                
+        except anthropic.APIConnectionError as e:
+            yield f"连接错误: 无法连接到API服务器。请检查网络连接。详细错误: {str(e)}"
+        except anthropic.AuthenticationError as e:
+            yield f"认证错误: API密钥无效。请检查ANTHROPIC_API_KEY环境变量。详细错误: {str(e)}"
+        except anthropic.RateLimitError as e:
+            yield f"速率限制错误: API调用过于频繁。请稍后重试。详细错误: {str(e)}"
+        except Exception as e:
+            yield f"未知错误: {type(e).__name__}: {str(e)}"
+
 
 def main():
     """示例用法"""
@@ -345,13 +398,16 @@ def main():
             # 添加用户消息到对话历史
             conversation_history.append({"role": "user", "content": user_input})
             
-            # 获取智能体回答
-            print("智能体正在思考...")
-            response = agent.chat(conversation_history)
-            print(f"智能体: {response}\n")
+            # 获取智能体回答（流式输出）
+            print("智能体: ", end="", flush=True)
+            full_response = ""
+            for chunk in agent.chat_stream(conversation_history):
+                print(chunk, end="", flush=True)
+                full_response += chunk
+            print("\n")
             
             # 添加智能体回答到对话历史
-            conversation_history.append({"role": "assistant", "content": response})
+            conversation_history.append({"role": "assistant", "content": full_response})
             
     except Exception as e:
         print(f"程序出错: {e}")
