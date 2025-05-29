@@ -1,225 +1,234 @@
-# 智能体学习与 MCP 天气服务项目
+# Crisis Agent - 智能告警分析系统
 
-这是一个用于学习和演示如何搭建智能体以及实现 Model Context Protocol (MCP) 服务的 Python 和 Node.js 项目。项目核心是使用 Anthropic Claude 模型构建一个具备天气查询能力的智能体。
+## 📋 项目简介
 
-## 🌟 项目亮点
+Crisis Agent 是一个基于提示词模板的智能告警分析系统，能够自动分析系统告警并提供全面的分析报告，包括潜在原因、影响评估和针对性的响应措施建议。
 
--   🤖 **Python 智能体 (`agent.py`)**:
-    -   基于 Anthropic Claude 模型。
-    -   支持单轮和多轮对话。
-    -   能够理解用户意图，特别是天气相关的查询。
-    -   通过 MCP 服务调用外部工具获取实时天气信息。
-    -   包含专门的天气查询方法和对话式天气查询。
-    -   提供备用机制，在 MCP 服务不可用时仍能进行基本对话。
--   🌐 **Node.js MCP 天气服务器 (`mcp-backend/`)**:
-    -   实现了 MCP 规范，作为智能体的工具提供者。
-    -   提供 `get_weather` (天气查询) 和 `get_location` (地理编码) 工具。
-    -   通过 SSE (Server-Sent Events) 和 JSON-RPC 与智能体通信。
-    -   调用高德地图 API 获取真实的地理和天气数据。
-    -   易于配置和启动。
--   📚 **丰富的使用示例和测试脚本**:
-    -   `examples.py`: 智能体基础功能演示。
-    -   `test_mcp_weather.py`: 针对天气查询功能的完整测试套件。
--   🔧 **易于扩展和定制**: 模块化设计，方便添加更多工具和智能体能力。
+## ✨ 核心功能
 
-## 🚀 快速开始
+### 🔍 智能分析能力
+- **错误码识别**: 自动识别并解析告警中的错误码，提供详细的错误含义
+- **关键词分析**: 基于预定义词典分析告警内容，识别可能的问题类型
+- **历史事件匹配**: 与历史知识库进行相似度比较，提供参考案例
+- **系统组件识别**: 自动识别受影响的系统组件和服务
 
-### 1. 环境要求
+### 📊 影响评估
+- **严重程度分级**: 根据关键词自动评估告警的严重程度（严重/高/中/低/信息）
+- **受影响系统**: 识别可能受到影响的系统组件和服务
+- **级联影响分析**: 评估潜在的连锁反应和业务影响
 
--   Python 3.8+
--   Node.js >= 16.0.0
--   npm (Node Package Manager)
--   Anthropic API Key
--   高德地图 API Key (用于 MCP 服务器)
+### 🎯 智能响应建议
+- **即时措施**: 提供立即可执行的应急处理步骤
+- **长期措施**: 建议预防性措施和系统改进方案
+- **模板化响应**: 针对不同类型的问题提供专业的响应模板
 
-### 2. 安装依赖
-
-**Python 智能体依赖:**
-
-```bash
-pip install -r requirements.txt
-```
-
-**Node.js MCP 服务器依赖:**
-
-```bash
-cd mcp-backend
-npm install
-```
-
-### 3. 配置 API 密钥
-
-#### a. Anthropic API Key (Python 智能体)
-
-1.  在项目根目录下，复制环境变量示例文件：
-    ```bash
-    cp env.example .env
-    ```
-2.  编辑 `.env` 文件，添加您的 Anthropic API 密钥：
-    ```env
-    ANTHROPIC_API_KEY=your_anthropic_api_key_here
-    ```
-
-#### b. 高德地图 API Key (Node.js MCP 服务器)
-
-1.  在 `mcp-backend` 目录下创建一个 `.env` 文件 (如果尚不存在)。
-2.  编辑 `mcp-backend/.env` 文件，添加您的高德地图 API Key：
-    ```env
-    AMAP_API_KEY=your_amap_api_key_here
-    ```
-    **注意**: `AMAP_API_KEY` 对于 MCP 服务器的正常运行至关重要。
-
-### 4. 启动 MCP 天气服务器
-
-切换到 `mcp-backend` 目录并启动服务器：
-
-```bash
-cd mcp-backend
-npm run mcp
-```
-
-服务器默认运行在 `http://localhost:3001`。您应该能看到服务器成功启动并列出可用工具的消息。
-
-### 5. 运行 Python 智能体
-
-确保 MCP 服务器正在运行后，在项目根目录运行智能体：
-
-**交互式天气对话:**
-
-```bash
-python agent.py
-```
-
-**专门的天气查询演示:**
-
-```bash
-python agent.py demo
-```
-
-**运行天气功能测试套件:**
-
-```bash
-python test_mcp_weather.py
-```
-
-**查看基础智能体功能示例:**
-
-```bash
-python examples.py
-```
-
-## 📁 项目结构
+## 🏗️ 系统架构
 
 ```
 crisis-agent/
-├── agent.py                # 主要的天气智能体类 (WeatherAgent)
-├── examples.py             # 基础智能体功能使用示例
-├── test_mcp_weather.py     # 天气查询功能测试脚本
-├── requirements.txt        # Python 项目依赖
-├── env.example             # Python 智能体环境变量示例
-├── README.md               # 本项目说明
-├── MCP_WEATHER_GUIDE.md    # MCP 天气查询系统详细指南
-└── mcp-backend/            # Node.js MCP 天气服务器
-    ├── mcp-server.js       # MCP 服务器核心逻辑
-    ├── server.js           # (可选) 旧的 API 服务器
-    ├── package.json        # Node.js 项目依赖和脚本
-    ├── .env.example        # Node.js MCP 服务器环境变量示例 (建议创建)
-    └── README.md           # MCP 服务器详细说明
+├── crisis/                    # 核心包
+│   ├── __init__.py            # 包初始化
+│   ├── analysis.py            # 主分析引擎
+│   ├── config.py              # 配置文件
+│   └── analysis-prompt.md     # 原始提示词模板
+├── test_analysis.py           # 测试脚本
+└── README.md                  # 项目文档
 ```
 
-## ⚙️ Python 智能体 (`agent.py`) 使用指南
+## 🚀 快速开始
 
-`WeatherAgent` 类封装了与 Claude 模型的交互，并集成了通过 MCP 服务器进行天气查询的功能。
-
-### 主要功能
-
--   **`__init__(api_key, mcp_server_url)`**: 初始化智能体，连接到 Anthropic API 和 MCP 服务器。
--   **`ask(question, system_prompt)`**: 单轮提问。如果问题与天气相关，会尝试通过 MCP 服务器获取信息并融入回答。
--   **`chat(messages, system_prompt)`**: 多轮对话。同样具备天气查询的智能判断。
--   **`query_weather(city)`**: 直接调用 MCP 服务器的 `get_weather` 工具查询指定城市的天气，并格式化输出。
--   **`_is_weather_query(question)`**: 判断问题是否与天气相关。
--   **`_call_mcp_tool(tool_name, arguments)`**: (内部方法) 实际调用 MCP 服务器工具的逻辑。
-
-### 示例代码
+### 基本使用
 
 ```python
-from agent import WeatherAgent
+from crisis import AlertAnalysisAgent
 
-# 创建天气智能体实例
-agent = WeatherAgent()
+# 初始化智能体
+agent = AlertAnalysisAgent()
 
-# 场景1: 直接查询特定城市天气
-beijing_weather = agent.query_weather("北京")
-print(f"北京天气预报:\n{beijing_weather}\n")
+# 分析告警
+alert = """
+系统告警: aladdin服务异常
+时间: 2024-01-15 14:30:00
+错误码: 10015
+描述: aladdin请求超时，连接失败
+影响: 用户无法正常访问相关功能
+"""
 
-# 场景2: 对话式询问天气
-print("与智能体对话 (输入 'quit' 退出):")
-conversation_history = []
-
-user_input = "你好"
-conversation_history.append({"role": "user", "content": user_input})
-response = agent.chat(conversation_history)
-print(f"智能体: {response}")
-conversation_history.append({"role": "assistant", "content": response})
-
-user_input = "深圳今天天气怎么样？"
-conversation_history.append({"role": "user", "content": user_input})
-response = agent.chat(conversation_history)
-print(f"智能体: {response}")
-conversation_history.append({"role": "assistant", "content": response})
+result = agent.analyze_alert(alert)
+print(result)
 ```
 
-## 🔧 自定义和扩展
+### 自定义配置
 
-### Python 智能体 (`agent.py`)
+```python
+# 自定义配置
+custom_config = {
+    "similarity_threshold": 0.7,  # 历史事件相似度阈值
+    "max_historical_matches": 3,  # 最大历史匹配数量
+    "log_level": "DEBUG"
+}
 
--   **模型参数**: 在 `WeatherAgent` 类中，您可以调整 `model` (Claude 模型版本), `max_tokens`, `temperature` 等参数。
--   **添加新工具**: 参考 `_call_mcp_tool` 和 `query_weather` 的实现，您可以让智能体调用 MCP 服务器上的其他工具 (例如 `get_location`) 或新的 MCP 服务。
--   **提示词工程**: 优化 `system_prompt` 和传递给 Claude 的天气数据格式，以获得更精确或更自然的回答。
+# 自定义错误码
+custom_error_codes = {
+    "99999": "自定义错误码",
+    "88888": "特殊服务异常"
+}
 
-### Node.js MCP 服务器 (`mcp-backend/`)
+agent = AlertAnalysisAgent(
+    config=custom_config,
+    error_code_mapping=custom_error_codes
+)
+```
 
--   **添加新工具**: 在 `mcp-server.js` 中定义新的工具 schema (在 `TOOLS`数组中)，并实现相应的工具逻辑函数 (类似 `getWeather` 和 `getLocation`)。
--   **修改数据源**: 您可以修改工具实现，使其从不同的 API 或数据源获取信息。
+### 添加历史数据
 
-## 📚 学习路径与参考
+```python
+# 添加新的历史事件
+new_event = {
+    "description": "Redis缓存服务响应缓慢",
+    "cause": "Redis内存使用率过高",
+    "solution": "清理缓存，重启服务",
+    "prevention": "设置内存监控",
+    "severity": "中",
+    "duration": "15分钟"
+}
 
-1.  **基础使用** - 运行 `examples.py` 和 `agent.py`，理解 Anthropic API 的基本调用。
-2.  **提示词工程** - 学习编写有效的 `system_prompt` 来引导智能体的行为和角色。
-3.  **对话管理** - 研究 `agent.py` 中的 `chat` 方法，理解如何维护多轮对话的上下文。
-4.  **MCP 服务理解** - 阅读 `mcp-backend/README.md` 和 `MCP_WEATHER_GUIDE.md`，理解 MCP 服务器的工作原理和 `mcp-server.js` 的实现。
-5.  **工具调用集成** - 分析 `WeatherAgent` 中 `_call_mcp_tool` 和 `query_weather` 如何与 MCP 服务交互以实现天气查询。
-6.  **功能扩展** - 尝试根据“后续扩展方向”添加新功能，例如为 MCP 服务添加新工具，或让 Python 智能体能够使用这些新工具。
-7.  **生产部署考虑** - 思考如何将此类系统部署到生产环境，包括错误处理、日志记录、配置管理和安全性。
+agent.add_historical_data("incident_005", new_event)
+```
 
-### 参考资料
+## 📝 输出格式
 
--   **`MCP_WEATHER_GUIDE.md`**: 本项目中关于 MCP 天气查询系统的详细设置和使用指南。
--   **`mcp-backend/README.md`**: MCP 服务器的详细技术文档。
--   [Anthropic 官方文档](https://docs.anthropic.com/)
--   [Model Context Protocol (MCP) 规范](https://modelcontextprotocol.io/specification/2025-03-26/)
--   [高德开放平台文档](https://lbs.amap.com/api/webservice/guide/api/weatherinfo)
+系统输出采用结构化的XML格式：
 
-## ⚠️ 注意事项
+```xml
+<analysis>
+<possible_causes>
+• 错误码 10015: aladdin请求失败
+• 关键词分析 - 超时: 网络连接超时或服务响应时间过长
+• 关键词分析 - 连接失败: 网络连接问题或目标服务不可用
+</possible_causes>
 
--   **API 密钥安全**: 确保您的 Anthropic 和高德地图 API 密钥安全，不要将它们提交到版本控制中。使用 `.env` 文件进行管理。
--   **API 成本与限流**: 注意 API 调用可能产生的费用以及服务商的频率限制。
--   **MCP 服务器依赖**: Python 智能体的天气查询功能依赖于 `mcp-backend` 服务的正确运行。
+<impact_assessment>
+严重程度: 高
+受影响的系统/服务: aladdin, 网络
+潜在级联影响: 高风险 - 可能导致业务中断
+影响范围: 可能影响最终用户和业务流程
+</impact_assessment>
 
-## 💡 后续扩展方向 (结合 MCP 和智能体)
+<response_measures>
+即时措施:
+1. 检查aladdin服务状态和健康检查端点
+2. 查看aladdin服务日志，识别错误模式
+3. 验证aladdin服务依赖的下游服务状态
 
--   [ ] **完善 MCP 连接器支持**: 当 Anthropic Python SDK 正式发布并稳定支持 MCP 连接器后，迁移到官方实现，简化 `_call_mcp_tool` 部分。
--   [ ] **更智能的城市/地址提取**: 改进 `_extract_city_from_query` 方法，或在 MCP 服务端增加一个专门的 NLP 工具进行意图识别和槽位填充。
--   [ ] **多语言支持**: 使智能体能够理解多种语言的天气查询请求，并让 MCP 服务能够处理或翻译这些请求。
--   [ ] **集成更多 MCP 工具**: 例如，在 MCP 服务中添加日历查询、新闻摘要、简单计算等工具，并让智能体学会使用它们。
--   [ ] **上下文感知的工具推荐**: 让智能体能根据对话历史和当前用户问题，更智能地选择合适的 MCP 工具。
--   [ ] **用户界面**: 为智能体提供一个简单的 Web 界面或集成到如 Discord、Slack 等聊天应用中。
--   [ ] **错误处理与日志**: 增强智能体和 MCP 服务器的错误处理（例如，MCP 工具调用失败时的优雅降级）及详细的日志记录能力。
--   [ ] **配置化工具**: 允许通过配置文件动态加载和配置 MCP 工具，而不是硬编码。
--   [ ] **异步工具调用**: 如果 MCP 工具执行时间较长，研究如何在智能体中处理异步工具调用和响应。
--   [ ] **记忆管理**: 为智能体添加长期记忆功能，可以记住用户的偏好设置（例如常用城市）。
--   [ ] **流式响应**: 实现智能体和 MCP 工具的流式响应，以提升用户体验。
+长期措施:
+1. 优化aladdin服务的错误处理和重试机制
+2. 实施服务熔断和降级策略
+3. 增强aladdin服务监控和告警
+</response_measures>
+</analysis>
+```
 
-## �� 许可证
+## 🔧 配置说明
 
-MIT License 
+### 错误码映射
+
+支持多种错误码类型：
+- **系统错误** (10000-10099): 内部错误、参数错误、权限问题等
+- **网络错误** (10100-10199): DNS、SSL、代理服务器等网络相关问题
+- **数据库错误** (10200-10299): 连接、查询、锁等数据库相关问题
+- **业务逻辑错误** (10300-10399): 认证、授权、业务规则等问题
+
+### 严重程度分级
+
+- **严重**: 系统崩溃、服务中断、数据丢失
+- **高**: 大规模影响、核心功能异常、用户无法访问
+- **中**: 性能下降、部分功能异常、连接不稳定
+- **低**: 轻微影响、个别用户反馈、功能降级
+- **信息**: 警告、提醒、建议、优化类信息
+
+### 响应模板
+
+针对不同问题类型提供专业响应模板：
+- **aladdin服务**: aladdin相关问题的专业处理流程
+- **数据库**: 数据库连接、性能、锁等问题的处理方案
+- **网络**: 网络连通性、DNS、SSL等问题的排查步骤
+- **资源**: CPU、内存、磁盘等资源问题的优化建议
+
+## 🧪 运行测试
+
+```bash
+# 运行完整测试套件
+python test_analysis.py
+
+# 运行基础功能测试
+python -c "from crisis import AlertAnalysisAgent; agent = AlertAnalysisAgent(); print('✅ 初始化成功')"
+```
+
+测试覆盖以下场景：
+1. **aladdin服务异常**: 测试aladdin服务相关告警的分析
+2. **数据库连接异常**: 测试数据库问题的识别和响应
+3. **系统资源不足**: 测试资源类问题的分析
+4. **网络连接问题**: 测试网络相关问题的处理
+5. **自定义配置**: 测试配置的灵活性
+6. **历史数据学习**: 测试知识库的动态更新
+
+## 📈 高级功能
+
+### 分析摘要
+
+获取结构化的分析摘要：
+
+```python
+summary = agent.get_analysis_summary(alert_details)
+# 返回JSON格式的摘要信息
+{
+  "severity": "高",
+  "affected_systems": ["aladdin", "网络"],
+  "cause_count": 4,
+  "has_historical_match": false,
+  "error_codes": ["10015"],
+  "timestamp": "2024-01-15T14:30:00"
+}
+```
+
+### 实时日志
+
+支持可配置的日志级别：
+- **DEBUG**: 详细的调试信息
+- **INFO**: 一般信息
+- **WARNING**: 警告信息
+- **ERROR**: 错误信息
+
+### 扩展性
+
+- **插件式架构**: 支持自定义分析模块
+- **配置驱动**: 通过配置文件灵活调整行为
+- **知识库更新**: 支持动态添加和更新历史数据
+- **多语言支持**: 支持中英文混合分析
+
+## 🤝 贡献指南
+
+1. Fork 项目
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开 Pull Request
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 🔗 相关链接
+
+- [项目主页](https://github.com/crisis-agent)
+- [问题反馈](https://github.com/crisis-agent/issues)
+- [更新日志](CHANGELOG.md)
+
+## 👥 作者
+
+- **Crisis Agent Team** - *初始开发* - [GitHub](https://github.com/crisis-agent)
+
+## 🙏 致谢
+
+感谢所有为这个项目贡献代码、提出建议和报告问题的开发者们！ 

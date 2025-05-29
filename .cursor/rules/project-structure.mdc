@@ -3,40 +3,84 @@ description:
 globs: 
 alwaysApply: false
 ---
-# Crisis Agent Project Structure Guide
+# Crisis Agent - Intelligent Alert Analysis System
 
 ## Overview
-This is a crisis response intelligent agent system that integrates with Gaode Maps (高德地图) services through MCP (Model Context Protocol).
+This is an intelligent alert analysis system that automatically analyzes system alerts and provides comprehensive analysis reports, including potential causes, impact assessment, and targeted response recommendations.
 
-## Main Entry Point
-The intelligent agent entry point is [agent.py](mdc:agent.py), which contains the core logic for the crisis response agent.
+## Core Architecture
 
-## Backend Services
+### Main Package: `crisis/`
+The core intelligent alert analysis package contains:
+- **Analysis Engine**: [crisis/analysis.py](mdc:crisis/analysis.py) - Main `AlertAnalysisAgent` class with intelligent analysis capabilities
+- **Configuration**: [crisis/config.py](mdc:crisis/config.py) - Error code mappings, knowledge base, severity keywords, and response templates
+- **Package Init**: [crisis/__init__.py](mdc:crisis/__init__.py) - Package initialization and exports
+- **Prompt Template**: [crisis/analysis-prompt.md](mdc:crisis/analysis-prompt.md) - Original Chinese prompt template used as the foundation
 
-### MCP Backend - Gaode Maps Service
-The [mcp-backend/](mdc:mcp-backend) directory contains the Gaode Maps MCP service implementation:
-- **Main Server**: [mcp-backend/server.js](mdc:mcp-backend/server.js) - Node.js server providing Gaode Maps integration
-- **Configuration**: [mcp-backend/package.json](mdc:mcp-backend/package.json) - Node.js dependencies and scripts
-- **Documentation**: [mcp-backend/README.md](mdc:mcp-backend/README.md) - Detailed service documentation
+## Key Features
 
-## Configuration and Dependencies
-- **Python Dependencies**: [requirements.txt](mdc:requirements.txt) - Python package requirements
-- **Environment Setup**: [env.example](mdc:env.example) - Environment variables template
-- **Project Documentation**: [README.md](mdc:README.md) - Main project documentation
+### Intelligence Capabilities
+- **Error Code Recognition**: Automatic identification and interpretation of error codes
+- **Keyword Analysis**: Pattern matching based on predefined dictionaries
+- **Historical Event Matching**: Similarity comparison with knowledge base
+- **System Component Recognition**: Automatic identification of affected systems
+
+### Analysis Output
+- **Cause Analysis**: Multi-dimensional analysis of potential triggers
+- **Impact Assessment**: Severity grading and affected system identification
+- **Response Recommendations**: Immediate and long-term action plans
+- **Structured XML Output**: Standardized format matching the original prompt template
 
 ## Testing and Examples
-- **Connection Testing**: [test_connection.py](mdc:mcp:test_connection.py) - Tests for service connectivity
-- **Secondary Connection Test**: [test_connect2.py](mdc:mcp:test_connect2.py) - Additional connection tests
-- **Usage Examples**: [examples.py](mdc:mcp:examples.py) - Code examples and demonstrations
+- **Test Suite**: [test_analysis.py](mdc:test_analysis.py) - Comprehensive testing script with multiple scenarios
+- **Documentation**: [README.md](mdc:README.md) - Detailed project documentation and usage guide
 
-## Development Workflow
-1. Start with [agent.py](mdc:mcp:agent.py) for the main intelligent agent functionality
-2. The agent communicates with the Gaode Maps service via the MCP backend in [mcp-backend/server.js](mdc:mcp:mcp-backend/server.js)
-3. Use the test files to verify connections and functionality
-4. Refer to examples in [examples.py](mdc:mcp:examples.py) for usage patterns
+## Usage Patterns
+
+### Basic Usage
+```python
+from crisis import AlertAnalysisAgent
+
+agent = AlertAnalysisAgent()
+result = agent.analyze_alert(alert_details)
+```
+
+### Advanced Configuration
+```python
+agent = AlertAnalysisAgent(
+    config=custom_config,
+    error_code_mapping=custom_codes,
+    knowledge_base=custom_kb
+)
+```
 
 ## Key Technologies
-- **Python**: Main agent implementation
-- **Node.js**: MCP backend service
-- **Gaode Maps API**: Geographic and mapping services
-- **MCP (Model Context Protocol)**: Communication between agent and services
+- **Python**: Core implementation language
+- **Template-based Analysis**: Based on Chinese prompt engineering template
+- **Pattern Matching**: Regex and keyword-based analysis
+- **Knowledge Base**: Historical incident learning and matching
+- **Structured Output**: XML-formatted analysis results
+
+## Development Workflow
+1. Start with [crisis/analysis.py](mdc:crisis/analysis.py) for the main analysis logic
+2. Configure error codes and templates in [crisis/config.py](mdc:crisis/config.py)
+3. Use [test_analysis.py](mdc:test_analysis.py) to test various alert scenarios
+4. Refer to [README.md](mdc:README.md) for comprehensive documentation
+
+## Configuration Categories
+- **Error Codes**: System (10000-10099), Network (10100-10199), Database (10200-10299), Business Logic (10300-10399)
+- **Severity Levels**: 严重, 高, 中, 低, 信息
+- **Response Templates**: aladdin, database, network, resource
+- **System Components**: Database, network, storage, CPU, memory, services, etc.
+
+## Project Structure
+```
+crisis-agent/
+├── crisis/                    # Core intelligent analysis package
+│   ├── __init__.py           # Package initialization and exports
+│   ├── analysis.py           # Main AlertAnalysisAgent class
+│   ├── config.py             # Configuration (error codes, templates, etc.)
+│   └── analysis-prompt.md    # Original Chinese prompt template
+├── test_analysis.py          # Comprehensive test suite
+└── README.md                 # Project documentation
+```
