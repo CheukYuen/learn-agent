@@ -1,0 +1,163 @@
+# Crisis Agent - Intelligent Alert Classification & Analysis System
+
+## Overview
+This project contains TWO main alert analysis systems:
+1. **Legacy System**: Original `AlertAnalysisAgent` class in `crisis/analysis.py`
+2. **New Classification System**: Advanced workflow-based alert classification and specialized analysis (RECOMMENDED)
+
+## New Alert Classification System (Primary)
+
+### Core Architecture
+The new system follows a **two-stage pipeline**:
+1. **Classification Stage**: Categorizes alerts into specific types
+2. **Specialized Analysis Stage**: Applies type-specific analysis logic
+
+### Key Files & Structure
+
+#### Main Workflow Engine
+- **`crisis/workflow.py`**: Core workflow functions
+  - `analyze_alert()`: NEW main function for alert analysis pipeline
+  - `route()`: Original generic routing function (legacy)
+
+#### Classification System
+- **`crisis/alert-classification-prompt.md`**: Alert classification prompt template
+  - Classifies alerts into: `javascript_error`, `aladdin_error`, `backend_api_error`
+  - Uses keyword analysis and pattern matching
+  - Outputs structured XML with category, reasoning, and confidence
+
+#### Specialized Analysis Prompts
+- **`crisis/aladdin-error-prompt.md`**: Aladdin JS Bridge error specialist
+  - ERROR CODE MAPPING: 10001-10019 (built-in knowledge)
+  - Focus: Quick error code explanation and fixes
+  - Output: `<aladdin_analysis>` with error codes, causes, quick fixes
+
+- **`crisis/javascript-error-prompt.md`**: JavaScript error specialist  
+  - Focus: Stack trace analysis, browser compatibility, code investigation
+  - Output: `<javascript_analysis>` with error types, stack analysis, investigation needs
+
+- **`crisis/backend-api-error-prompt.md`**: Backend API error specialist
+  - Focus: HTTP status codes, service impact, root cause analysis
+  - Output: `<backend_analysis>` with classification, impact, investigation needs
+
+#### Testing & Examples
+- **`crisis/example_usage.py`**: Comprehensive test suite with real scenarios
+- **`crisis/README.md`**: Detailed system documentation
+
+### Supported Alert Categories
+
+#### 1. Aladdin Errors (`aladdin_error`)
+- **Purpose**: Aladdin JS Bridge communication errors
+- **Key Feature**: Built-in error code mapping (10001-10019)
+- **Processing**: Returns error code explanation and quick fixes
+- **Keywords**: aladdin, bridge, 桥接, 移动端, app内嵌页面
+
+#### 2. JavaScript Errors (`javascript_error`)
+- **Purpose**: Frontend JavaScript runtime errors
+- **Key Feature**: Stack trace analysis and code investigation guidance
+- **Processing**: Detailed analysis + code scanning preparation
+- **Keywords**: JavaScript, JS, script error, 前端错误, TypeError, ReferenceError
+
+#### 3. Backend API Errors (`backend_api_error`)
+- **Purpose**: Server-side API and system errors
+- **Key Feature**: HTTP status analysis and service impact assessment
+- **Processing**: Root cause analysis + code scanning preparation
+- **Keywords**: API, 接口, 服务器, 数据库, HTTP状态码, 超时
+
+### Usage Patterns
+
+#### Primary Usage (Recommended)
+```python
+from crisis.workflow import analyze_alert
+
+# Complete alert analysis with classification
+alert_details = """
+告警时间: 2024-01-15 14:30:22
+错误信息: Aladdin bridge call failed with error code 10015
+...
+"""
+
+result = analyze_alert(alert_details)
+print(result)  # Returns classified analysis
+```
+
+#### Legacy Usage (Still Available)
+```python
+from crisis import AlertAnalysisAgent
+
+agent = AlertAnalysisAgent()
+result = agent.analyze_alert(alert_details)
+```
+
+### Development Workflow
+
+#### For Alert Classification Improvements
+1. Modify `crisis/alert-classification-prompt.md` to adjust classification logic
+2. Add new categories by updating the classification prompt
+3. Create corresponding specialized analysis prompts
+4. Update `analyze_alert()` function in `workflow.py`
+
+#### For Specialized Analysis Improvements
+1. Edit specific prompt files (`aladdin-error-prompt.md`, etc.)
+2. Update error code mappings in Aladdin prompt
+3. Test with `crisis/example_usage.py`
+
+#### Testing New Features
+```bash
+# Test all categories
+python crisis/example_usage.py
+
+# Test specific category
+python crisis/example_usage.py aladdin
+python crisis/example_usage.py javascript  
+python crisis/example_usage.py backend
+```
+
+### Configuration & Extensions
+
+#### Error Code Management
+- Aladdin error codes (10001-10019) are defined in `aladdin-error-prompt.md`
+- Legacy error codes still in `crisis/config.py`
+
+#### Adding New Alert Categories
+1. Update classification prompt with new category
+2. Create new specialized analysis prompt file
+3. Add handling logic in `analyze_alert()` function
+4. Add test cases in `example_usage.py`
+
+### Output Formats
+
+#### Classification Output
+```xml
+<classification>
+<category>aladdin_error</category>
+<reasoning>关键词识别和错误特征分析</reasoning>
+<confidence>高</confidence>
+</classification>
+```
+
+#### Specialized Analysis Output
+Each category has its own structured XML output format:
+- Aladdin: `<aladdin_analysis>`
+- JavaScript: `<javascript_analysis>`  
+- Backend: `<backend_analysis>`
+
+### Key Technologies
+- **Python**: Core implementation
+- **Template-based Prompts**: Markdown templates with variable substitution
+- **Two-stage LLM Pipeline**: Classification → Specialized analysis
+- **Structured XML Output**: Consistent, parseable analysis results
+- **Pattern Matching**: Keyword and error code recognition
+
+### Future Enhancements
+- **Code Repository Scanning**: Planned for JavaScript and Backend errors
+- **Historical Case Matching**: Pattern-based similarity matching
+- **Automated Fix Suggestions**: Code-level repair recommendations
+
+## Legacy System (crisis/analysis.py)
+Still available for backwards compatibility. See original project structure documentation for details.
+
+## File Priority for Development
+1. `crisis/workflow.py` - Main workflow logic
+2. `crisis/alert-classification-prompt.md` - Classification rules
+3. `crisis/*-error-prompt.md` - Specialized analysis logic
+4. `crisis/example_usage.py` - Testing and validation 
