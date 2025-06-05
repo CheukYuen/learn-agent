@@ -1,0 +1,156 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# @amap/amap-maps-mcp-server 高德地图 MCP 服务器库规则
+
+## 概述
+
+`@amap/amap-maps-mcp-server` 是高德地图官方提供的 Model Context Protocol (MCP) 服务器实现，提供完整的高德地图 API 集成功能。
+
+## 核心信息
+
+- **包名**：`@amap/amap-maps-mcp-server`
+- **版本**：`0.0.8`
+- **主入口**：[node_modules/@amap/amap-maps-mcp-server/build/index.js](mdc:node_modules/@amap/amap-maps-mcp-server/build/index.js)
+- **配置文件**：[node_modules/@amap/amap-maps-mcp-server/package.json](mdc:node_modules/@amap/amap-maps-mcp-server/package.json)
+- **文档**：[node_modules/@amap/amap-maps-mcp-server/README.md](mdc:node_modules/@amap/amap-maps-mcp-server/README.md)
+
+## 环境配置
+
+### API Key 要求
+- **环境变量**：`AMAP_MAPS_API_KEY`
+- **获取地址**：https://lbs.amap.com/api/webservice/create-project-and-key
+- **必需性**：必须设置，否则服务器启动失败
+
+### NPX 使用配置
+```json
+{
+    "mcpServers": {
+        "amap-maps": {
+            "command": "npx",
+            "args": ["-y", "@amap/amap-maps-mcp-server"],
+            "env": {
+                "AMAP_MAPS_API_KEY": "<YOUR_API_KEY>"
+            }
+        }
+    }
+}
+```
+
+## 完整工具列表
+
+### 1. 地理编码和逆地理编码
+- **`maps_geo`**：地址 → 经纬度坐标
+  - 参数：`address`（必需），`city`（可选）
+  - 用途：将结构化地址转换为经纬度
+  
+- **`maps_regeocode`**：经纬度 → 行政区划地址
+  - 参数：`location`（必需）- 格式："经度,纬度"
+  - 用途：将坐标转换为地址信息
+
+### 2. IP 定位和天气
+- **`maps_ip_location`**：IP 地址定位
+  - 参数：`ip`（必需）
+  - 用途：根据 IP 地址获取地理位置
+  
+- **`maps_weather`**：天气查询
+  - 参数：`city`（必需）- 城市名或 adcode
+  - 用途：获取城市天气预报信息
+
+### 3. 路径规划工具
+- **`maps_direction_walking`**：步行路径规划
+  - 参数：`origin`, `destination`（都必需）- 格式："经度,纬度"
+  - 限制：100km 以内
+  
+- **`maps_bicycling`**：骑行路径规划
+  - 参数：`origin`, `destination`（都必需）
+  - 限制：500km 以内
+  - 特性：考虑天桥、单行线、封路
+  
+- **`maps_direction_driving`**：驾车路径规划
+  - 参数：`origin`, `destination`（都必需）
+  - 用途：小客车、轿车出行方案
+  
+- **`maps_direction_transit_integrated`**：公共交通路径规划
+  - 参数：`origin`, `destination`, `city`, `cityd`（都必需）
+  - 支持：火车、公交、地铁综合方案
+
+### 4. 距离测量
+- **`maps_distance`**：距离测量
+  - 参数：`origins`（支持多点：120,30|120,31），`destination`，`type`（可选）
+  - 类型：0-直线距离，1-驾车距离（默认），3-步行距离
+
+### 5. POI 搜索工具
+- **`maps_text_search`**：关键词搜索
+  - 参数：`keywords`（必需），`city`（可选），`citylimit`（可选）
+  - 用途：搜索相关 POI
+  
+- **`maps_around_search`**：周边搜索
+  - 参数：`location`（必需），`radius`（可选，默认1000），`keywords`（可选）
+  - 用途：指定位置周边 POI 搜索
+  
+- **`maps_search_detail`**：POI 详情查询
+  - 参数：`id`（必需）- 从搜索结果获取的 POI ID
+  - 用途：获取 POI 详细信息
+
+## 技术实现细节
+
+### MCP 架构
+- **SDK**：`@modelcontextprotocol/sdk`
+- **传输层**：`StdioServerTransport`
+- **协议**：JSON-RPC over stdio
+
+### API 调用模式
+- **基础 URL**：`https://restapi.amap.com/v3/`
+- **认证**：通过 `key` 参数传递 API Key
+- **来源标识**：`source=ts_mcp`
+
+### 返回格式
+所有工具返回统一格式：
+```javascript
+{
+    content: [{
+        type: "text",
+        text: JSON.stringify(data, null, 2)
+    }],
+    isError: boolean
+}
+```
+
+## 核心处理函数
+
+### 主要处理器映射
+- `handleReGeocode()` - 逆地理编码
+- `handleGeo()` - 地理编码  
+- `handleIPLocation()` - IP定位
+- `handleWeather()` - 天气查询
+- `handleBicycling()` - 骑行规划
+- `handleWalking()` - 步行规划
+- `handleDriving()` - 驾车规划
+- `handleTransitIntegrated()` - 公交规划
+- `handleDistance()` - 距离测量
+- `handleTextSearch()` - 文本搜索
+- `handleAroundSearch()` - 周边搜索
+- `handleSearchDetail()` - POI详情
+
+## 使用建议
+
+### 重写 mcp-server.js 时
+1. **导入 MCP SDK**：使用 `@modelcontextprotocol/sdk`
+2. **环境变量**：确保 `AMAP_MAPS_API_KEY` 正确配置
+3. **工具注册**：使用 `MAPS_TOOLS` 数组注册所有工具
+4. **错误处理**：参考现有的错误处理模式
+5. **API 调用**：复用现有的 URL 构建和参数处理逻辑
+
+### 坐标格式注意事项
+- **标准格式**：经度在前，纬度在后（"116.397428,39.90923"）
+- **多点格式**：使用竖线分隔（"120,30|120,31"）
+- **精度要求**：建议保留6位小数
+
+### 常用工具组合
+1. **地址查询流程**：`maps_geo` → `maps_weather`
+2. **路径规划流程**：`maps_geo` → `maps_direction_*`
+3. **POI 搜索流程**：`maps_text_search` → `maps_search_detail`
+4. **周边服务流程**：`maps_geo` → `maps_around_search`

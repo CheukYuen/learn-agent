@@ -1,0 +1,179 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# MCP Server 重写指南
+
+## 目标
+
+使用 [@amap/amap-maps-mcp-server](mdc:node_modules/@amap/amap-maps-mcp-server/build/index.js) 的官方实现来重写当前的 [mcp-server.js](mdc:mcp-server.js)，提供标准 MCP 协议支持。
+
+## 当前实现分析
+
+### 现有文件对比
+- **当前服务器**：[mcp-server.js](mdc:mcp-server.js) - 自定义 Express 实现
+- **目标服务器**：[server.js](mdc:server.js) - HTTP API Bridge
+- **官方实现**：[@amap/amap-maps-mcp-server](mdc:node_modules/@amap/amap-maps-mcp-server/build/index.js) - 标准 MCP
+
+### 功能对比
+
+| 功能 | 当前 mcp-server.js | 官方 @amap 包 | 需要迁移 |
+|------|-------------------|---------------|----------|
+| 天气查询 | ✅ get_weather | ✅ maps_weather | 是 |
+| 地理编码 | ✅ get_location | ✅ maps_geo | 是 |
+| 逆地理编码 | ❌ | ✅ maps_regeocode | 新增 |
+| IP定位 | ❌ | ✅ maps_ip_location | 新增 |
+| 路径规划 | ❌ | ✅ 4种规划 | 新增 |
+| 距离测量 | ❌ | ✅ maps_distance | 新增 |
+| POI搜索 | ❌ | ✅ 3种搜索 | 新增 |
+
+## 重写策略
+
+### 1. 架构变更
+```javascript
+// 从 Express HTTP 服务器
+const express = require('express');
+const app = express();
+
+// 改为 MCP stdio 服务器
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+```
+
+### 2. 工具定义迁移
+从现有的简单工具：
+```javascript
+const TOOLS = [
+  { name: "get_weather", description: "获取指定城市的天气预报信息" },
+  { name: "get_location", description: "获取指定地址的地理编码信息" }
+];
+```
+
+迁移到官方完整工具集：
+```javascript
+const MAPS_TOOLS = [
+  REGEOCODE_TOOL,      // maps_regeocode
+  GEO_TOOL,            // maps_geo  
+  IP_LOCATION_TOOL,    // maps_ip_location
+  WEATHER_TOOL,        // maps_weather
+  SEARCH_DETAIL_TOOL,  // maps_search_detail
+  BICYCLING_TOOL,      // maps_bicycling
+  WALKING_TOOL,        // maps_direction_walking
+  DRIVING_TOOl,        // maps_direction_driving
+  TRANSIT_INTEGRATED_TOOL, // maps_direction_transit_integrated
+  DISTANCE_TOOL,       // maps_distance
+  TEXT_SEARCH_TOOL,    // maps_text_search
+  AROUND_SEARCH_TOOL   // maps_around_search
+];
+```
+
+### 3. 处理函数更新
+
+#### 保留并增强的功能
+- `getWeather()` → `handleWeather()`
+- `getLocation()` → `handleGeo()`
+
+#### 新增功能
+- `handleReGeocode()` - 逆地理编码
+- `handleIPLocation()` - IP定位
+- `handleBicycling()` - 骑行规划
+- `handleWalking()` - 步行规划
+- `handleDriving()` - 驾车规划
+- `handleTransitIntegrated()` - 公交规划
+- `handleDistance()` - 距离测量
+- `handleTextSearch()` - 文本搜索
+- `handleAroundSearch()` - 周边搜索
+- `handleSearchDetail()` - POI详情
+
+### 4. 协议变更
+
+#### 从 HTTP/SSE
+```javascript
+// GET /sse - SSE 连接
+app.get('/sse', (req, res) => { ... });
+
+// POST /sse - JSON-RPC 调用  
+app.post('/sse', async (req, res) => { ... });
+```
+
+#### 到标准 MCP
+```javascript
+// 工具列表
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: MAPS_TOOLS,
+}));
+
+// 工具调用
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    switch (request.params.name) {
+        case "maps_weather": return await handleWeather(...);
+        // ...
+    }
+});
+```
+
+## 实施步骤
+
+### Phase 1: 基础架构迁移
+1. 更新 package.json 依赖
+2. 修改主服务器架构（Express → MCP SDK）
+3. 保留现有的天气和地理编码功能
+
+### Phase 2: 工具扩展
+1. 添加所有12个官方工具定义
+2. 实现对应的处理函数
+3. 复用官方 API 调用逻辑
+
+### Phase 3: 测试和优化
+1. 测试所有工具功能
+2. 验证错误处理
+3. 性能优化
+
+## 关键迁移点
+
+### 环境变量保持不变
+```bash
+AMAP_API_KEY=<your_key>  # 当前使用
+# 保持兼容，官方使用 AMAP_MAPS_API_KEY
+```
+
+### API 调用模式统一
+```javascript
+// 统一使用官方模式
+const url = new URL("https://restapi.amap.com/v3/...");
+url.searchParams.append("key", AMAP_MAPS_API_KEY);
+url.searchParams.append("source", "ts_mcp");
+```
+
+### 返回格式标准化
+```javascript
+// 统一返回格式
+return {
+    content: [{
+        type: "text", 
+        text: JSON.stringify(data, null, 2)
+    }],
+    isError: false
+};
+```
+
+## 测试兼容性
+
+### 保留 HTTP 接口（可选）
+考虑保留 HTTP API 以维持与现有客户端的兼容性：
+- `/health` - 健康检查
+- 可能需要额外的 HTTP 包装器
+
+### MCP 客户端测试
+使用标准 MCP 客户端测试新实现：
+```bash
+npx @amap/amap-maps-mcp-server
+```
+
+## 文件引用
+
+- **主要参考**：[官方实现](mdc:node_modules/@amap/amap-maps-mcp-server/build/index.js)
+- **当前实现**：[mcp-server.js](mdc:mcp-server.js)
+- **HTTP 服务器**：[server.js](mdc:server.js)
+- **配置文件**：[package.json](mdc:package.json)

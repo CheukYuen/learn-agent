@@ -1,0 +1,315 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 高德地图 MCP 工具功能详解
+
+## 工具分类总览
+
+基于 [@amap/amap-maps-mcp-server](mdc:node_modules/@amap/amap-maps-mcp-server/build/index.js) 提供的12个核心工具。
+
+## 1. 基础地理服务
+
+### maps_geo (地理编码)
+**功能**：地址文本 → 经纬度坐标
+```javascript
+// 输入参数
+{
+    address: "北京市朝阳区",  // 必需
+    city: "北京"            // 可选，指定查询城市
+}
+
+// 返回结果
+{
+    country: "中国",
+    province: "北京市", 
+    city: "北京市",
+    citycode: "010",
+    district: "朝阳区",
+    adcode: "110105",
+    location: "116.443205,39.921506",
+    level: "区县"
+}
+```
+
+### maps_regeocode (逆地理编码)
+**功能**：经纬度坐标 → 地址信息
+```javascript
+// 输入参数
+{
+    location: "116.443205,39.921506"  // 必需，格式：经度,纬度
+}
+
+// 返回结果
+{
+    provice: "北京市",
+    city: "北京市", 
+    district: "朝阳区"
+}
+```
+
+### maps_ip_location (IP定位)
+**功能**：IP地址 → 地理位置
+```javascript
+// 输入参数
+{
+    ip: "114.114.114.114"  // 必需
+}
+
+// 返回结果
+{
+    province: "江苏省",
+    city: "南京市",
+    adcode: "320100",
+    rectangle: "118.1,31.2;119.2,32.6"
+}
+```
+
+## 2. 天气服务
+
+### maps_weather (天气查询)
+**功能**：城市名/adcode → 天气预报
+```javascript
+// 输入参数  
+{
+    city: "北京"  // 必需，支持城市名或adcode
+}
+
+// 返回结果
+{
+    city: "北京",
+    forecasts: [
+        {
+            date: "2024-01-15",
+            week: "一", 
+            dayweather: "晴",
+            nightweather: "晴",
+            daytemp: "5",
+            nighttemp: "-3",
+            daywind: "北风",
+            nightwind: "北风", 
+            daypower: "3-4级",
+            nightpower: "≤3级"
+        }
+        // 更多天数预报...
+    ]
+}
+```
+
+## 3. 路径规划服务
+
+### maps_direction_walking (步行规划)
+**功能**：步行路径规划（≤100km）
+```javascript
+// 输入参数
+{
+    origin: "116.443205,39.921506",      // 必需，起点经纬度
+    destination: "116.397428,39.90923"   // 必需，终点经纬度
+}
+
+// 返回结果：路径详情、距离、时长等
+```
+
+### maps_bicycling (骑行规划)  
+**功能**：骑行路径规划（≤500km），考虑天桥、单行线、封路
+```javascript
+// 输入参数
+{
+    origin: "116.443205,39.921506",      // 必需
+    destination: "116.397428,39.90923"   // 必需  
+}
+```
+
+### maps_direction_driving (驾车规划)
+**功能**：小客车、轿车驾车路径规划
+```javascript
+// 输入参数
+{
+    origin: "116.443205,39.921506",      // 必需
+    destination: "116.397428,39.90923"   // 必需
+}
+```
+
+### maps_direction_transit_integrated (公交规划)
+**功能**：综合公共交通规划（火车、公交、地铁）
+```javascript
+// 输入参数
+{
+    origin: "116.443205,39.921506",    // 必需
+    destination: "121.473701,31.230416", // 必需
+    city: "北京",                      // 必需，起点城市
+    cityd: "上海"                      // 必需，终点城市  
+}
+```
+
+## 4. 距离测量
+
+### maps_distance (距离测量)
+**功能**：多点到单点的距离测量
+```javascript
+// 输入参数
+{
+    origins: "116.443205,39.921506|116.397428,39.90923",  // 必需，多点用|分隔
+    destination: "121.473701,31.230416",                  // 必需
+    type: "1"  // 可选：0-直线距离，1-驾车距离（默认），3-步行距离
+}
+
+// 返回结果
+{
+    results: [
+        {
+            origin_id: "0",
+            dest_id: "0", 
+            distance: "1063220",  // 米
+            duration: "38183"     // 秒
+        }
+    ]
+}
+```
+
+## 5. POI搜索服务
+
+### maps_text_search (关键词搜索)
+**功能**：根据关键词搜索POI
+```javascript
+// 输入参数
+{
+    keywords: "咖啡厅",     // 必需
+    city: "北京",          // 可选，限制搜索城市
+    citylimit: "true"      // 可选，是否严格限制城市范围
+}
+
+// 返回结果
+{
+    suggestion: {
+        keywords: ["咖啡", "咖啡厅", "咖啡店"],
+        ciytes: [{"name": "北京市"}]
+    },
+    pois: [
+        {
+            id: "B000A8URXB",
+            name: "星巴克咖啡",
+            address: "朝阳区建国门外大街1号",
+            typecode: "050301",
+            photos: {...}
+        }
+    ]
+}
+```
+
+### maps_around_search (周边搜索)
+**功能**：指定位置周边POI搜索
+```javascript
+// 输入参数
+{
+    location: "116.443205,39.921506",  // 必需，中心点坐标
+    radius: "1000",                    // 可选，搜索半径（米），默认1000
+    keywords: "餐厅"                   // 可选，搜索关键词
+}
+
+// 返回结果
+{
+    pois: [
+        {
+            id: "B000A8URXB",
+            name: "某某餐厅", 
+            address: "具体地址",
+            typecode: "050000",
+            photos: {...}
+        }
+    ]
+}
+```
+
+### maps_search_detail (POI详情)
+**功能**：获取POI详细信息
+```javascript
+// 输入参数
+{
+    id: "B000A8URXB"  // 必需，从搜索结果获取的POI ID
+}
+
+// 返回结果
+{
+    id: "B000A8URXB",
+    name: "POI名称",
+    location: "116.443205,39.921506",
+    address: "详细地址",
+    business_area: "商圈名称", 
+    city: "所在城市",
+    // 更多详细信息...
+}
+```
+
+## 使用流程示例
+
+### 典型业务流程
+
+#### 1. 地址查询 → 天气获取
+```javascript
+// Step 1: 地理编码
+maps_geo({address: "北京市朝阳区"})
+// Step 2: 使用返回的城市信息查询天气
+maps_weather({city: "北京"})
+```
+
+#### 2. 路径规划完整流程
+```javascript
+// Step 1: 起点地理编码
+maps_geo({address: "北京市朝阳区建国门"})
+// Step 2: 终点地理编码  
+maps_geo({address: "北京市海淀区中关村"})
+// Step 3: 路径规划
+maps_direction_driving({
+    origin: "116.443205,39.921506",
+    destination: "116.310316,39.992073"
+})
+```
+
+#### 3. 周边服务发现
+```javascript
+// Step 1: 地理编码获取坐标
+maps_geo({address: "北京市朝阳区国贸"}) 
+// Step 2: 周边搜索
+maps_around_search({
+    location: "116.443205,39.921506",
+    keywords: "咖啡厅",
+    radius: "500"
+})
+// Step 3: 获取详情
+maps_search_detail({id: "B000A8URXB"})
+```
+
+## 错误处理模式
+
+所有工具都遵循统一的错误处理：
+```javascript
+// 成功响应
+{
+    content: [{type: "text", text: JSON.stringify(data)}],
+    isError: false
+}
+
+// 错误响应
+{
+    content: [{type: "text", text: "Error: 具体错误信息"}],
+    isError: true
+}
+```
+
+## 坐标系说明
+
+- **坐标系**：GCJ-02（火星坐标系）
+- **格式**：经度在前，纬度在后
+- **精度**：建议保留6位小数
+- **示例**：`"116.443205,39.921506"`（北京国贸）
+
+## API限制
+
+- **QPS限制**：根据高德地图API套餐
+- **距离限制**：
+  - 步行规划：≤100km
+  - 骑行规划：≤500km
+  - 其他无明确限制
+- **搜索结果**：默认返回前20条POI
