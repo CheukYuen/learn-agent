@@ -4,9 +4,11 @@
   "main": "mcp-demo.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && chmod 755 build/index.js",
+    "build": "tsc && chmod 755 build/index.js && chmod 755 build/http-server.js",
     "start": "node --loader ts-node/esm src/index.ts",
-    "dev": "node --loader ts-node/esm --watch src/index.ts"
+    "start:http": "node --loader ts-node/esm src/http-server.ts",
+    "dev": "node --loader ts-node/esm --watch src/index.ts",
+    "dev:http": "node --loader ts-node/esm --watch src/http-server.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,16 +16,20 @@
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "express": "^4.21.2",
     "zod": "^3.25.53"
   },
   "devDependencies": {
+    "@types/express": "^4.17.23",
     "@types/node": "^22.15.30",
-    "typescript": "^5.8.3",
-    "ts-node": "^10.9.0"
+    "ts-node": "^10.9.0",
+    "typescript": "^5.8.3"
   },
   "type": "module",
   "bin": {
     "weather": "./build/index.js"
   },
-  "files": ["build"]
+  "files": [
+    "build"
+  ]
 }

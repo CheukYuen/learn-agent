@@ -1,0 +1,182 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Agent.py MCP连接器集成规则
+
+## 项目目标
+
+重写 [agent.py](mdc:agent.py) 创建一个简化版天气智能体，使用Anthropic MCP连接器连接到远程MCP服务器。
+
+## 核心要求
+
+### 1. 简化架构原则
+- 移除复杂的重试机制和流式输出
+- 保留核心AI对话功能
+- 使用Anthropic原生MCP连接器API
+- 专注于天气查询功能
+
+### 2. MCP连接器API使用
+
+```python
+# 正确的API调用方式
+response = anthropic.beta.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1000,
+    messages=[{"role": "user", "content": question}],
+    mcp_servers=[{
+        "type": "url",
+        "url": "http://localhost:3001/mcp",  # 对应mcp-demo HTTP服务器
+        "name": "weather-server",
+        "tool_configuration": {
+            "enabled": True,
+            "allowed_tools": ["get-forecast", "get-alerts"]
+        }
+    }],
+    betas=["mcp-client-2025-04-04"]  # 使用betas参数，不是HTTP头部
+)
+```
+
+## 重写策略
+
+### 删除的功能
+- 复杂的 `_make_api_call_with_retry` 方法
+- `chat_stream` 流式输出功能 
+- `WeatherAgent` 类的直接HTTP调用逻辑
+- 自定义MCP服务器连接和状态检查
+
+### 保留的功能
+- 基础的 `AIAgent` 类
+- 简单的 `ask()` 和 `chat()` 方法
+- 基本错误处理
+- 环境变量管理
+
+### 新增的功能
+- MCP服务器配置管理
+- 天气查询的自然语言接口
+- 简化的示例和测试
+
+## 新的类结构
+
+```python
+class SimpleWeatherAgent:
+    """简化版天气智能体，使用MCP连接器"""
+    
+    def __init__(self, api_key: Optional[str] = None, mcp_server_url: str = "http://localhost:3001/mcp"):
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        self.client = anthropic.Anthropic(api_key=self.api_key)
+        self.mcp_server_url = mcp_server_url
+        
+    def ask_weather(self, question: str) -> str:
+        """询问天气相关问题"""
+        # 使用MCP连接器调用
+        
+    def chat(self, messages: list) -> str:
+        """多轮对话，支持天气查询"""
+        # 实现对话逻辑
+```
+
+## MCP服务器工具映射
+
+### 可用工具（来自mcp-demo服务器）
+- `get-forecast`: 获取指定坐标的天气预报
+  - 参数: `latitude` (float), `longitude` (float)
+  - 用途: 详细天气预报
+  
+- `get-alerts`: 获取州级天气警报
+  - 参数: `state` (string, 2字母州代码)
+  - 用途: 天气警报信息
+
+### 智能体交互模式
+1. **自然语言输入**: 用户询问天气
+2. **智能路由**: AI决定调用哪个工具
+3. **参数提取**: 从用户输入提取坐标或州代码
+4. **结果格式化**: 将API结果转换为友好的自然语言
+
+## 错误处理策略
+
+### 1. MCP连接错误
+```python
+try:
+    response = self.client.beta.messages.create(...)
+except anthropic.APIConnectionError:
+    return "无法连接到天气服务，请检查MCP服务器状态"
+```
+
+### 2. 工具调用错误
+- 处理无效的坐标或州代码
+- 处理NWS API限制（仅支持美国）
+- 提供用户友好的错误消息
+
+### 3. 网络超时
+- 设置合理的超时时间
+- 提供重试建议
+
+## 配置管理
+
+### 环境变量
+```bash
+# .env 文件
+ANTHROPIC_API_KEY=your_api_key_here
+MCP_SERVER_URL=http://localhost:3001/mcp
+```
+
+### 配置验证
+- 启动时检查API密钥
+- 验证MCP服务器可达性
+- 提供清晰的配置指导
+
+## 测试和调试
+
+### 1. 单元测试
+- 测试基本对话功能
+- 测试天气查询功能
+- 模拟MCP服务器响应
+
+### 2. 集成测试
+- 与实际MCP服务器交互
+- 端到端天气查询流程
+- 错误场景处理
+
+### 3. 示例使用
+```python
+# 创建智能体
+agent = SimpleWeatherAgent()
+
+# 询问天气
+response = agent.ask_weather("北京今天天气怎么样？")
+
+# 多轮对话
+messages = [
+    {"role": "user", "content": "你好"},
+    {"role": "assistant", "content": "您好！我可以帮您查询天气信息。"},
+    {"role": "user", "content": "纽约明天会下雨吗？"}
+]
+response = agent.chat(messages)
+```
+
+## 部署注意事项
+
+### 1. 依赖管理
+- 确保安装最新版本的 `anthropic` 库
+- 支持MCP连接器的版本要求
+
+### 2. 服务器依赖
+- 需要运行mcp-demo HTTP服务器
+- 确保网络连接可达性
+
+### 3. API限制
+- 注意Anthropic API的速率限制
+- 考虑缓存机制减少API调用
+
+## 最佳实践
+
+1. **保持简单**: 专注核心功能，避免过度工程化
+2. **用户体验**: 提供清晰的错误消息和使用指导  
+3. **可扩展性**: 设计易于添加新工具的架构
+4. **文档完善**: 提供详细的使用示例和故障排除指南
+
+## 与Crisis Agent项目的关系
+
+该简化的天气智能体可以作为 [crisis/](mdc:crisis) 项目中智能告警分析系统的天气组件，展示MCP连接器的集成模式。

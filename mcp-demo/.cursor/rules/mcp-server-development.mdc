@@ -1,0 +1,173 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# MCP Demo 服务器开发规则
+
+## 项目架构概览
+
+MCP Demo 项目支持两种传输方式：
+- **STDIO传输**: [src/index.ts](mdc:src/index.ts) - 用于本地开发和测试
+- **HTTP传输**: 需要创建新文件 - 用于远程访问和Anthropic MCP连接器
+
+## 关键文件结构
+
+### 核心服务器文件
+- [src/index.ts](mdc:src/index.ts) - STDIO传输的MCP服务器（保持不变）
+- 新建 `src/http-server.ts` - HTTP+SSE传输的MCP服务器
+
+### 共享模块（复用于所有传输方式）
+- [src/shared/server.ts](mdc:src/shared/server.ts) - 服务器工厂函数
+- [src/shared/http-client.ts](mdc:src/shared/http-client.ts) - NWS API HTTP客户端
+- [src/shared/formatters.ts](mdc:src/shared/formatters.ts) - 数据格式化工具
+- [src/shared/constants.ts](mdc:src/shared/constants.ts) - 常量定义
+- [src/shared/types.ts](mdc:src/shared/types.ts) - TypeScript类型定义
+
+### 配置文件
+- [package.json](mdc:package.json) - 项目依赖和脚本
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript配置
+
+## HTTP服务器开发指南
+
+### 1. 必需依赖包
+
+```json
+{
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "express": "^4.18.2",
+    "zod": "^3.25.53"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^22.15.30"
+  }
+}
+```
+
+### 2. 推荐的HTTP服务器实现模式
+
+```typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import express from "express";
+```
+
+### 3. 核心API端点设计
+
+- **单一端点**: `/mcp` 处理所有请求（推荐）
+  - `POST /mcp` - 处理JSON-RPC消息
+  - `GET /mcp` - 建立SSE流（可选）
+- **健康检查**: `/health` - 服务器状态检查
+
+### 4. 工具注册模式
+
+复用 [src/shared/](mdc:src/shared) 中的所有共享功能：
+
+```typescript
+// 复用API客户端
+import { makeNWSRequest } from './shared/http-client.js';
+// 复用格式化器
+import { formatAlert } from './shared/formatters.js';
+// 复用常量
+import { NWS_API_BASE } from './shared/constants.js';
+// 复用类型
+import type { AlertsResponse, ForecastResponse } from './shared/types.js';
+
+// 注册工具
+server.tool("get-forecast", "Get weather forecast", schema, handler);
+server.tool("get-alerts", "Get weather alerts", schema, handler);
+```
+
+## 传输方式对比
+
+| 特性 | STDIO传输 | HTTP+SSE传输 |
+|------|-----------|--------------|
+| 用途 | 本地开发测试 | 远程访问、智能体调用 |
+| 连接方式 | 进程间通信 | HTTP网络请求 |
+| MCP连接器支持 | ❌ 不支持 | ✅ 支持 |
+| 会话管理 | 单一连接 | 多会话支持 |
+| 实现复杂度 | 简单 | 中等 |
+
+## 开发最佳实践
+
+### 1. 会话管理
+- 使用 `sessionId` 跟踪多个并发连接
+- 实现连接清理机制
+- 处理会话超时
+
+### 2. 错误处理
+- 返回标准JSON-RPC错误格式
+- 记录详细错误日志
+- 优雅处理网络异常
+
+### 3. 安全考虑
+- 验证请求来源
+- 实现请求频率限制
+- 输入数据验证
+
+### 4. 测试策略
+- 使用MCP Inspector测试工具
+- 集成健康检查端点
+- 模拟Anthropic MCP连接器调用
+
+## 启动脚本建议
+
+在 [package.json](mdc:package.json) 中添加：
+
+```json
+{
+  "scripts": {
+    "start:stdio": "node build/index.js",
+    "start:http": "node build/http-server.js",
+    "dev:stdio": "npm run build && npm run start:stdio",
+    "dev:http": "npm run build && npm run start:http"
+  }
+}
+```
+
+## 调试工具
+
+### MCP Inspector
+```bash
+# 测试STDIO服务器
+npx @modelcontextprotocol/inspector node build/index.js
+
+# 测试HTTP服务器
+# 启动HTTP服务器后访问: http://localhost:3001/health
+```
+
+### 健康检查
+```bash
+curl http://localhost:3001/health
+```
+
+## 部署注意事项
+
+1. **端口配置**: 使用环境变量 `PORT` 或默认 `3001`
+2. **CORS设置**: 如需跨域访问，配置CORS头
+3. **SSL**: 生产环境建议使用HTTPS
+4. **监控**: 实现日志记录和性能监控
+
+## 与Anthropic MCP连接器集成
+
+配置示例：
+```python
+mcp_servers = [{
+    "type": "url",
+    "url": "http://localhost:3001/mcp",
+    "name": "weather-server",
+    "tool_configuration": {
+        "enabled": True,
+        "allowed_tools": ["get-forecast", "get-alerts"]
+    }
+}]
+```
+
+## 故障排除
+
+1. **连接失败**: 检查端口是否被占用
+2. **工具调用失败**: 验证NWS API网络连接
+3. **会话丢失**: 检查会话存储和清理逻辑
+4. **类型错误**: 确保安装了正确的类型定义包
