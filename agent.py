@@ -1,289 +1,210 @@
 """
-智能体实现 - 使用 Anthropic Claude 模型
-简单的AI助手，支持对话和天气查询功能
+简化的智能体实现 - 使用 Anthropic MCP Connector
+支持通过MCP协议调用天气服务工具
 """
 
 import os
-from typing import Optional, List, Dict, Any, Generator
+from typing import Optional, List, Dict, Any
 import anthropic
 import httpx
 from dotenv import load_dotenv
-import time
-import random
 import requests
-import json
-import sys
 
 # 加载环境变量
 load_dotenv()
 
 
-class AIAgent:
-    """简单的AI智能体类"""
+class MCPWeatherAgent:
+    """使用 MCP Connector 的天气智能体"""
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, mcp_server_url: Optional[str] = None):
         """
         初始化智能体
         
         Args:
             api_key: Anthropic API密钥，如果不提供则从环境变量读取
+            mcp_server_url: MCP 服务器 URL，默认为本地服务器
         """
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY_PLUS")
         if not self.api_key:
             raise ValueError("未找到Anthropic API密钥。请在环境变量中设置ANTHROPIC_API_KEY或直接传入api_key参数。")
         
         # 初始化Anthropic客户端
         self.client = anthropic.Anthropic(
             api_key=self.api_key,
-            http_client=httpx.Client(
-                proxy="http://127.0.0.1:7890/"  # 设置代理
-            )
+            base_url="https://anthropic.claude-plus.top",  # 设置中转 API URL，移除末尾的 /v1 避免路径重复
         )
-        self.model = "claude-sonnet-4-20250514"
-    
-    def _make_api_call_with_retry(self, messages, system_prompt, max_retries=3, stream=False):
-        """带重试机制的API调用，支持流式输出"""
-        for attempt in range(max_retries):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=1000,
-                    temperature=0.7,
-                    system=system_prompt,
-                    messages=messages,
-                    stream=stream
-                )
-                
-                if stream:
-                    return response
-                else:
-                    return response.content[0].text
-                    
-            except anthropic.InternalServerError as e:
-                if attempt < max_retries - 1:
-                    wait_time = (2 ** attempt) + random.uniform(0, 1)  # 指数退避
-                    print(f"服务器错误，{wait_time:.1f}秒后重试... (尝试 {attempt + 1}/{max_retries})")
-                    time.sleep(wait_time)
-                    continue
-                raise e
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    wait_time = 1 + random.uniform(0, 1)
-                    print(f"请求失败，{wait_time:.1f}秒后重试... (尝试 {attempt + 1}/{max_retries})")
-                    time.sleep(wait_time)
-                    continue
-                raise e
-    
-    def ask(self, question: str, system_prompt: str = "你是一个有用的AI助手。") -> str:
-        """
-        向智能体提问
         
-        Args:
-            question: 用户问题
-            system_prompt: 系统提示词，定义智能体的角色
-            
-        Returns:
-            智能体的回答
-        """
-        try:
-            messages = [{"role": "user", "content": question}]
-            return self._make_api_call_with_retry(messages, system_prompt)
-                
-        except anthropic.APIConnectionError as e:
-            return f"连接错误: 无法连接到API服务器。请检查网络连接。详细错误: {str(e)}"
-        except anthropic.AuthenticationError as e:
-            return f"认证错误: API密钥无效。请检查ANTHROPIC_API_KEY环境变量。详细错误: {str(e)}"
-        except anthropic.RateLimitError as e:
-            return f"速率限制错误: API调用过于频繁。请稍后重试。详细错误: {str(e)}"
-        except Exception as e:
-            return f"未知错误: {type(e).__name__}: {str(e)}"
-    
-    def chat(self, messages: list, system_prompt: str = "你是一个有用的AI助手。") -> str:
-        """
-        多轮对话
+        # MCP 服务器配置
+        self.mcp_server_url = mcp_server_url or "http://localhost:3001/mcp"
         
-        Args:
-            messages: 对话历史，格式为 [{"role": "user", "content": "..."}, ...]
-            system_prompt: 系统提示词
-            
-        Returns:
-            智能体的回答
-        """
-        try:
-            return self._make_api_call_with_retry(messages, system_prompt)
-                
-        except anthropic.APIConnectionError as e:
-            return f"连接错误: 无法连接到API服务器。请检查网络连接。详细错误: {str(e)}"
-        except anthropic.AuthenticationError as e:
-            return f"认证错误: API密钥无效。请检查ANTHROPIC_API_KEY环境变量。详细错误: {str(e)}"
-        except anthropic.RateLimitError as e:
-            return f"速率限制错误: API调用过于频繁。请稍后重试。详细错误: {str(e)}"
-        except Exception as e:
-            return f"未知错误: {type(e).__name__}: {str(e)}"
-
-    def chat_stream(self, messages: list, system_prompt: str = "你是一个有用的AI助手。") -> Generator[str, None, None]:
-        """
-        多轮对话的流式输出版本
-        
-        Args:
-            messages: 对话历史，格式为 [{"role": "user", "content": "..."}, ...]
-            system_prompt: 系统提示词
-            
-        Returns:
-            生成器，产生智能体的回答片段
-        """
-        try:
-            response = self._make_api_call_with_retry(messages, system_prompt, stream=True)
-            
-            # 处理流式响应
-            for chunk in response:
-                if chunk.type == "content_block_delta":
-                    yield chunk.delta.text
-                
-        except anthropic.APIConnectionError as e:
-            yield f"连接错误: 无法连接到API服务器。请检查网络连接。详细错误: {str(e)}"
-        except anthropic.AuthenticationError as e:
-            yield f"认证错误: API密钥无效。请检查ANTHROPIC_API_KEY环境变量。详细错误: {str(e)}"
-        except anthropic.RateLimitError as e:
-            yield f"速率限制错误: API调用过于频繁。请稍后重试。详细错误: {str(e)}"
-        except Exception as e:
-            yield f"未知错误: {type(e).__name__}: {str(e)}"
-
-
-class WeatherAgent(AIAgent):
-    """带天气查询功能的智能体类"""
-    
-    def __init__(self, api_key: Optional[str] = None, mcp_server_url: Optional[str] = None):
-        """
-        初始化天气智能体
-        
-        Args:
-            api_key: Anthropic API密钥
-            mcp_server_url: MCP 服务器 URL（可选）
-        """
-        super().__init__(api_key)
-        
-        # MCP 服务器配置（可选）
-        self.mcp_server_url = mcp_server_url or "http://localhost:3001"
-        self.mcp_sse_url = f"{self.mcp_server_url}/sse"
-        
-        # 检查 MCP 服务器是否可用（可选）
-        if mcp_server_url:
-            self._check_mcp_server()
+        # 检查 MCP 服务器是否可用
+        self._check_mcp_server()
     
     def _check_mcp_server(self):
         """检查 MCP 服务器是否可用"""
         try:
-            health_url = f"{self.mcp_server_url}/health"
+            # 检查健康状态
+            health_url = self.mcp_server_url.replace('/mcp', '/health')
             response = requests.get(health_url, timeout=5)
             if response.status_code == 200:
                 server_info = response.json()
                 print(f"✅ MCP 服务器连接成功: {server_info.get('server', 'unknown')}")
+                print(f"📡 可用工具: {', '.join(server_info.get('tools', []))}")
+                return True
             else:
                 print("⚠️ MCP 服务器响应异常")
+                return False
         except Exception as e:
             print(f"⚠️ 无法连接到 MCP 服务器: {e}")
+            return False
     
-    def _call_mcp_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """直接调用 MCP 工具"""
-        try:
-            payload = {
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "tools/call",
-                "params": {
-                    "name": tool_name,
-                    "arguments": arguments
-                }
-            }
-            
-            response = requests.post(
-                self.mcp_sse_url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                if "result" in result and "content" in result["result"]:
-                    content = result["result"]["content"]
-                    if content and len(content) > 0 and "text" in content[0]:
-                        text_data = content[0]["text"]
-                        return json.loads(text_data)
-                    else:
-                        raise Exception(f"MCP 工具返回内容格式异常")
-                else:
-                    raise Exception(f"MCP 工具调用失败")
-            else:
-                raise Exception(f"HTTP 错误: {response.status_code}")
-                
-        except Exception as e:
-            return {"error": str(e)}
-    
-    def query_weather(self, city: str) -> str:
+    def chat(self, message: str, system_prompt: str = None) -> str:
         """
-        专门的天气查询方法
+        与智能体对话，自动使用MCP工具
         
         Args:
-            city: 要查询天气的城市名称
+            message: 用户消息
+            system_prompt: 系统提示词，可选
             
         Returns:
-            天气查询结果
+            智能体的回答
         """
         try:
-            # 调用 MCP 工具获取天气数据
-            weather_result = self._call_mcp_tool("get_weather", {"city": city})
+            # 默认系统提示词
+            if system_prompt is None:
+                system_prompt = """你是一个有用的AI助手，专门帮助用户查询天气信息。
+你可以使用以下工具：
+- get-forecast: 获取指定坐标的天气预报
+- get-alerts: 获取指定州的天气警报
+
+当用户询问天气信息时，请使用这些工具来提供准确的信息。
+美国主要城市坐标参考：
+- 旧金山: 37.7749, -122.4194
+- 纽约: 40.7128, -74.0060
+- 洛杉矶: 34.0522, -118.2437
+- 芝加哥: 41.8781, -87.6298
+- 迈阿密: 25.7617, -80.1918"""
             
-            if "error" in weather_result:
-                return f"天气查询失败: {weather_result['error']}"
+            # 使用 MCP Connector 调用 API
+            response = self.client.beta.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1000,
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": message}
+                ],
+                mcp_servers=[
+                    {
+                        "type": "url",
+                        "url": self.mcp_server_url,
+                        "name": "weather-server",
+                        "tool_configuration": {
+                            "enabled": True,
+                            "allowed_tools": ["get-forecast", "get-alerts"]
+                        }
+                    }
+                ],
+                betas=["mcp-client-2025-04-04"]
+            )
             
-            # 格式化天气数据
-            if "weather" in weather_result:
-                city_name = weather_result.get("city", city)
-                province = weather_result.get("province", "")
-                report_time = weather_result.get("reporttime", "")
-                
-                weather_info = [
-                    f"📍 **{city_name}** ({province})",
-                    f"🕐 数据更新时间: {report_time}",
-                    ""
-                ]
-                
-                for i, day_weather in enumerate(weather_result["weather"]):
-                    if i == 0:
-                        weather_info.append("**今天天气:**")
-                    else:
-                        weather_info.append(f"**{day_weather.get('week', f'第{i+1}天')}:**")
+            # 处理响应内容
+            full_response = ""
+            for content_block in response.content:
+                if content_block.type == "text":
+                    full_response += content_block.text
+                elif content_block.type == "mcp_tool_use":
+                    # MCP 工具使用信息
+                    tool_info = f"\n🛠️ 正在使用工具: {content_block.name}"
+                    if hasattr(content_block, 'server_name'):
+                        tool_info += f" (来自: {content_block.server_name})"
+                    full_response += tool_info
+                elif content_block.type == "mcp_tool_result":
+                    # MCP 工具结果已经集成在最终响应中
+                    pass
                     
-                    weather_info.extend([
-                        f"🌤️ 白天: {day_weather.get('dayweather', '未知')} | 夜间: {day_weather.get('nightweather', '未知')}",
-                        f"🌡️ 温度: {day_weather.get('daytemp', '?')}°C / {day_weather.get('nighttemp', '?')}°C",
-                        f"💨 风力: {day_weather.get('daywind', '未知')} {day_weather.get('daypower', '')}",
-                        ""
-                    ])
+            return full_response
                 
-                return "\n".join(weather_info)
-            else:
-                return f"{city} 的天气查询完成，但数据格式异常。"
-            
+        except anthropic.APIConnectionError as e:
+            return f"❌ 连接错误: 无法连接到API服务器。请检查网络连接。\n详细错误: {str(e)}"
+        except anthropic.AuthenticationError as e:
+            return f"❌ 认证错误: API密钥无效。请检查ANTHROPIC_API_KEY环境变量。\n详细错误: {str(e)}"
+        except anthropic.RateLimitError as e:
+            return f"❌ 速率限制错误: API调用过于频繁。请稍后重试。\n详细错误: {str(e)}"
         except Exception as e:
-            return f"天气查询失败: {str(e)}"
+            return f"❌ 未知错误: {type(e).__name__}: {str(e)}"
+    
+    def get_weather_forecast(self, city_name: str, latitude: float, longitude: float) -> str:
+        """
+        获取指定城市的天气预报
+        
+        Args:
+            city_name: 城市名称（用于显示）
+            latitude: 纬度
+            longitude: 经度
+            
+        Returns:
+            天气预报结果
+        """
+        message = f"请获取 {city_name} (纬度: {latitude}, 经度: {longitude}) 的天气预报"
+        return self.chat(message)
+    
+    def get_weather_alerts(self, state_code: str) -> str:
+        """
+        获取指定州的天气警报
+        
+        Args:
+            state_code: 州代码（如: CA, NY）
+            
+        Returns:
+            天气警报结果
+        """
+        message = f"请获取 {state_code} 州的天气警报信息"
+        return self.chat(message)
+
+
+class SimpleAgent:
+    """简化的通用AI智能体"""
+    
+    def __init__(self, api_key: Optional[str] = None):
+        """初始化智能体"""
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY_PLUS")
+        if not self.api_key:
+            raise ValueError("未找到Anthropic API密钥。请在环境变量中设置ANTHROPIC_API_KEY")
+        
+        self.client = anthropic.Anthropic(
+            api_key=self.api_key,
+            base_url="https://anthropic.claude-plus.top",  # 设置中转 API URL，移除末尾的 /v1 避免路径重复
+        )
+    
+    def ask(self, question: str, system_prompt: str = "你是一个有用的AI助手。") -> str:
+        """简单的问答功能"""
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1000,
+                system=system_prompt,
+                messages=[{"role": "user", "content": question}]
+            )
+            return response.content[0].text
+        except Exception as e:
+            return f"❌ 错误: {str(e)}"
 
 
 def main():
-    """示例用法"""
+    """交互式演示"""
+    print("=== MCP 天气智能体演示 ===")
+    print("✨ 这是一个使用 MCP Connector 的天气助手")
+    print("💡 你可以询问美国城市的天气情况")
+    print("🌍 支持的功能：天气预报、天气警报")
+    print("\n示例问题：")
+    print("- 旧金山的天气如何？")
+    print("- 加州有什么天气警报吗？")
+    print("- 纽约明天会下雨吗？")
+    print("\n输入 'quit' 退出程序\n")
+    
     try:
-        # 创建智能体实例
-        agent = AIAgent()
-        
-        print("=== AI智能体演示 ===")
-        print("✨ 这是一个简单的AI助手")
-        print("💡 你可以和我聊任何话题")
-        print("\n输入 'quit' 退出程序\n")
-        
-        # 简单的对话循环
-        conversation_history = []
+        agent = MCPWeatherAgent()
         
         while True:
             user_input = input("你: ").strip()
@@ -295,49 +216,48 @@ def main():
             if not user_input:
                 continue
             
-            # 添加用户消息到对话历史
-            conversation_history.append({"role": "user", "content": user_input})
-            
-            # 获取智能体回答（流式输出）
             print("智能体: ", end="", flush=True)
-            full_response = ""
-            for chunk in agent.chat_stream(conversation_history):
-                print(chunk, end="", flush=True)
-                full_response += chunk
-            print("\n")
-            
-            # 添加智能体回答到对话历史
-            conversation_history.append({"role": "assistant", "content": full_response})
+            response = agent.chat(user_input)
+            print(response)
+            print()
             
     except Exception as e:
-        print(f"程序出错: {e}")
-        print("请检查API密钥是否正确设置")
+        print(f"❌ 程序出错: {e}")
+        print("请检查API密钥和MCP服务器是否正确设置")
 
 
-def demo_weather_query():
+def demo_weather_queries():
     """天气查询演示"""
+    print("=== 天气查询演示 ===\n")
+    
     try:
-        agent = WeatherAgent(mcp_server_url="http://localhost:3001")
+        agent = MCPWeatherAgent()
         
-        print("=== 天气查询演示 ===\n")
+        # 演示天气预报查询
+        print("🌤️ 演示1: 获取旧金山天气预报")
+        result = agent.get_weather_forecast("旧金山", 37.7749, -122.4194)
+        print(f"结果: {result}\n")
+        print("-" * 60)
         
-        # 测试几个城市的天气
-        cities = ["北京", "上海", "广州", "深圳"]
+        # 演示天气警报查询
+        print("⚠️ 演示2: 获取加州天气警报")
+        result = agent.get_weather_alerts("CA")
+        print(f"结果: {result}\n")
+        print("-" * 60)
         
-        for city in cities:
-            print(f"🌤️  查询 {city} 天气:")
-            result = agent.query_weather(city)
-            print(f"{result}\n")
-            print("-" * 50)
-            
+        # 演示自然语言查询
+        print("💬 演示3: 自然语言查询")
+        result = agent.chat("纽约今天的天气怎么样？需要注意什么吗？")
+        print(f"结果: {result}\n")
+        
     except Exception as e:
-        print(f"演示出错: {e}")
+        print(f"❌ 演示出错: {e}")
 
 
 if __name__ == "__main__":
     import sys
     
     if len(sys.argv) > 1 and sys.argv[1] == "demo":
-        demo_weather_query()
+        demo_weather_queries()
     else:
         main() 
