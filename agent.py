@@ -59,17 +59,21 @@ class MCPWeatherAgent:
             print(f"⚠️ 无法连接到 MCP 服务器: {e}")
             return False
     
-    def chat(self, message: str, system_prompt: str = None) -> str:
+    def chat(self, message: str, system_prompt: str = None, stream: bool = False) -> str:
         """
         与智能体对话，自动使用MCP工具
         
         Args:
             message: 用户消息
             system_prompt: 系统提示词，可选
+            stream: 是否使用流式输出
             
         Returns:
             智能体的回答
         """
+        if stream:
+            return self.chat_stream(message, system_prompt)
+        
         try:
             # 默认系统提示词
             if system_prompt is None:
@@ -134,6 +138,113 @@ class MCPWeatherAgent:
         except Exception as e:
             return f"❌ 未知错误: {type(e).__name__}: {str(e)}"
     
+    def chat_stream(self, message: str, system_prompt: str = None):
+        """
+        与智能体流式对话，实时输出响应
+        
+        Args:
+            message: 用户消息
+            system_prompt: 系统提示词，可选
+            
+        Yields:
+            逐步输出的文本片段
+        """
+        try:
+            # 默认系统提示词
+            if system_prompt is None:
+                system_prompt = """你是一个有用的AI助手，专门帮助用户查询天气信息。
+你可以使用以下工具：
+- get-forecast: 获取指定坐标的天气预报
+- get-alerts: 获取指定州的天气警报
+
+当用户询问天气信息时，请使用这些工具来提供准确的信息。
+美国主要城市坐标参考：
+- 旧金山: 37.7749, -122.4194
+- 纽约: 40.7128, -74.0060
+- 洛杉矶: 34.0522, -118.2437
+- 芝加哥: 41.8781, -87.6298
+- 迈阿密: 25.7617, -80.1918"""
+            
+            # 使用流式 API 调用
+            with self.client.beta.messages.stream(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1000,
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": message}
+                ],
+                mcp_servers=[
+                    {
+                        "type": "url",
+                        "url": self.mcp_server_url,
+                        "name": "weather-server",
+                        "tool_configuration": {
+                            "enabled": True,
+                            "allowed_tools": ["get-forecast", "get-alerts"]
+                        }
+                    }
+                ],
+                betas=["mcp-client-2025-04-04"]
+            ) as stream:
+                full_response = ""
+                
+                for event in stream:
+                    # 处理不同类型的流式事件
+                    if event.type == "content_block_start":
+                        content_block = event.content_block
+                        if content_block.type == "text":
+                            # 文本内容块开始
+                            pass
+                        elif content_block.type == "mcp_tool_use":
+                            # MCP工具使用开始
+                            tool_info = f"\n🛠️ 正在使用工具: {content_block.name}"
+                            if hasattr(content_block, 'server_name'):
+                                tool_info += f" (来自: {content_block.server_name})"
+                            print(tool_info, end="", flush=True)
+                            full_response += tool_info
+                    
+                    elif event.type == "content_block_delta":
+                        delta = event.delta
+                        if delta.type == "text_delta":
+                            # 文本增量更新
+                            text_chunk = delta.text
+                            print(text_chunk, end="", flush=True)
+                            full_response += text_chunk
+                        elif delta.type == "input_json_delta":
+                            # 工具输入的JSON增量（通常不需要显示）
+                            pass
+                    
+                    elif event.type == "content_block_stop":
+                        # 内容块结束
+                        pass
+                    
+                    elif event.type == "message_delta":
+                        # 消息级别的更新
+                        pass
+                    
+                    elif event.type == "message_stop":
+                        # 消息结束
+                        break
+                
+                return full_response
+                
+        except anthropic.APIConnectionError as e:
+            error_msg = f"❌ 连接错误: 无法连接到API服务器。请检查网络连接。\n详细错误: {str(e)}"
+            print(error_msg)
+            return error_msg
+        except anthropic.AuthenticationError as e:
+            error_msg = f"❌ 认证错误: API密钥无效。请检查ANTHROPIC_API_KEY环境变量。\n详细错误: {str(e)}"
+            print(error_msg)
+            return error_msg
+        except anthropic.RateLimitError as e:
+            error_msg = f"❌ 速率限制错误: API调用过于频繁。请稍后重试。\n详细错误: {str(e)}"
+            print(error_msg)
+            return error_msg
+        except Exception as e:
+            error_msg = f"❌ 未知错误: {type(e).__name__}: {str(e)}"
+            print(error_msg)
+            return error_msg
+    
     def get_weather_forecast(self, city_name: str, latitude: float, longitude: float) -> str:
         """
         获取指定城市的天气预报
@@ -177,8 +288,11 @@ class SimpleAgent:
             base_url="https://anthropic.claude-plus.top",  # 设置中转 API URL，移除末尾的 /v1 避免路径重复
         )
     
-    def ask(self, question: str, system_prompt: str = "你是一个有用的AI助手。") -> str:
+    def ask(self, question: str, system_prompt: str = "你是一个有用的AI助手。", stream: bool = False) -> str:
         """简单的问答功能"""
+        if stream:
+            return self.ask_stream(question, system_prompt)
+        
         try:
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -189,11 +303,39 @@ class SimpleAgent:
             return response.content[0].text
         except Exception as e:
             return f"❌ 错误: {str(e)}"
+    
+    def ask_stream(self, question: str, system_prompt: str = "你是一个有用的AI助手。") -> str:
+        """流式问答功能"""
+        try:
+            with self.client.messages.stream(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1000,
+                system=system_prompt,
+                messages=[{"role": "user", "content": question}]
+            ) as stream:
+                full_response = ""
+                
+                for event in stream:
+                    if event.type == "content_block_delta":
+                        delta = event.delta
+                        if delta.type == "text_delta":
+                            text_chunk = delta.text
+                            print(text_chunk, end="", flush=True)
+                            full_response += text_chunk
+                    elif event.type == "message_stop":
+                        break
+                
+                return full_response
+                
+        except Exception as e:
+            error_msg = f"❌ 错误: {str(e)}"
+            print(error_msg)
+            return error_msg
 
 
 def main():
     """交互式演示"""
-    print("=== MCP 天气智能体演示 ===")
+    print("=== MCP 天气智能体演示 (支持流式输出) ===")
     print("✨ 这是一个使用 MCP Connector 的天气助手")
     print("💡 你可以询问美国城市的天气情况")
     print("🌍 支持的功能：天气预报、天气警报")
@@ -201,10 +343,15 @@ def main():
     print("- 旧金山的天气如何？")
     print("- 加州有什么天气警报吗？")
     print("- 纽约明天会下雨吗？")
-    print("\n输入 'quit' 退出程序\n")
+    print("\n💻 命令：")
+    print("- '/stream' - 切换流式输出模式")
+    print("- '/help' - 显示帮助")
+    print("- 'quit' - 退出程序\n")
     
     try:
         agent = MCPWeatherAgent()
+        stream_mode = True  # 默认启用流式输出
+        print(f"🔄 当前模式: {'流式输出' if stream_mode else '普通输出'}\n")
         
         while True:
             user_input = input("你: ").strip()
@@ -213,13 +360,33 @@ def main():
                 print("再见！")
                 break
             
+            if user_input == '/stream':
+                stream_mode = not stream_mode
+                print(f"🔄 已切换到: {'流式输出' if stream_mode else '普通输出'} 模式\n")
+                continue
+            
+            if user_input == '/help':
+                print("💡 可用命令：")
+                print("- '/stream' - 切换流式输出模式")
+                print("- '/help' - 显示此帮助")
+                print("- 'quit' - 退出程序")
+                print("🌤️ 询问天气示例：旧金山的天气如何？\n")
+                continue
+            
             if not user_input:
                 continue
             
             print("智能体: ", end="", flush=True)
-            response = agent.chat(user_input)
-            print(response)
-            print()
+            
+            if stream_mode:
+                # 使用流式输出
+                response = agent.chat(user_input, stream=True)
+            else:
+                # 使用普通输出
+                response = agent.chat(user_input, stream=False)
+                print(response)
+            
+            print("\n")  # 添加换行分隔
             
     except Exception as e:
         print(f"❌ 程序出错: {e}")
@@ -228,26 +395,32 @@ def main():
 
 def demo_weather_queries():
     """天气查询演示"""
-    print("=== 天气查询演示 ===\n")
+    print("=== 天气查询演示 (流式输出) ===\n")
     
     try:
         agent = MCPWeatherAgent()
         
-        # 演示天气预报查询
-        print("🌤️ 演示1: 获取旧金山天气预报")
-        result = agent.get_weather_forecast("旧金山", 37.7749, -122.4194)
-        print(f"结果: {result}\n")
-        print("-" * 60)
+        # 演示天气预报查询 - 流式输出
+        print("🌤️ 演示1: 获取旧金山天气预报 (流式输出)")
+        print("结果: ", end="", flush=True)
+        result = agent.chat(f"请获取旧金山 (纬度: 37.7749, 经度: -122.4194) 的天气预报", stream=True)
+        print("\n" + "-" * 60)
         
-        # 演示天气警报查询
-        print("⚠️ 演示2: 获取加州天气警报")
-        result = agent.get_weather_alerts("CA")
-        print(f"结果: {result}\n")
-        print("-" * 60)
+        # 演示天气警报查询 - 流式输出
+        print("⚠️ 演示2: 获取加州天气警报 (流式输出)")
+        print("结果: ", end="", flush=True)
+        result = agent.chat("请获取 CA 州的天气警报信息", stream=True)
+        print("\n" + "-" * 60)
         
-        # 演示自然语言查询
-        print("💬 演示3: 自然语言查询")
-        result = agent.chat("纽约今天的天气怎么样？需要注意什么吗？")
+        # 演示自然语言查询 - 流式输出
+        print("💬 演示3: 自然语言查询 (流式输出)")
+        print("结果: ", end="", flush=True)
+        result = agent.chat("纽约今天的天气怎么样？需要注意什么吗？", stream=True)
+        print("\n" + "-" * 60)
+        
+        # 演示对比：非流式输出
+        print("📝 演示4: 对比非流式输出")
+        result = agent.chat("芝加哥的天气如何？", stream=False)
         print(f"结果: {result}\n")
         
     except Exception as e:

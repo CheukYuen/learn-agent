@@ -30,7 +30,7 @@ message = client.messages.create(
     messages=[
         {
             "role": "user",
-            "content": "Hey Claude, tell me a short fun fact about video games! 中文",
+            "content": "Hey Claude 你是什么模型？tell me a short fun fact about video games in chinese!",
         }
     ],
 )
@@ -43,7 +43,7 @@ message = client.messages.create(
     messages=[
         {
             "role": "user",
-            "content": "Hey Claude sonnet 4, tell me a short fun fact about video games! 中文",
+            "content": "Hey Claude 你是什么模型？ tell me a short fun fact about video games in chinese!",
         }
     ],
 )
