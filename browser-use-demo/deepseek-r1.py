@@ -3,6 +3,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+import psutil
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -13,7 +14,7 @@ load_dotenv()
 from langchain_deepseek import ChatDeepSeek
 from pydantic import SecretStr
 
-from browser_use import Agent
+from browser_use import Agent, BrowserSession
 
 api_key = os.getenv('DEEPSEEK_API_KEY', '')
 if not api_key:
@@ -99,15 +100,103 @@ async def run_with_manual_login():
 	await agent.run()
 
 
+async def run_with_existing_browser():
+    """连接到已经打开并登录的Chrome浏览器"""
+    print("🔗 正在连接到已打开的Chrome浏览器...")
+    
+    # 方法E：通过CDP URL连接
+    browser_session = BrowserSession(
+        cdp_url="http://localhost:9222"  # 连接到调试端口
+    )
+    
+    agent = Agent(
+        task=(
+            '在当前已登录的浏览器中执行以下操作：'
+            '1. 导航到 https://family.demo.sensorsdata.cn/dashboard/?project=EbizDemo&product=sbp_family&id=414&dash_type=lego'
+            '2. 在顶部绿色导航栏中找到"分析"菜单项并点击它'
+            '3. 在弹出的下拉菜单中，在"行为分析"部分找到"事件分析"选项并点击'
+            '4. 等待进入事件分析页面，页面加载完成后'
+            '5. 在页面底部找到绿色的"查询"按钮并点击它'
+        ),
+        llm=ChatDeepSeek(
+            base_url='https://api.deepseek.com/v1',
+            model='deepseek-reasoner',
+            api_key=SecretStr(api_key),
+        ),
+        browser_session=browser_session,
+        use_vision=False,
+        max_failures=3,
+        max_actions_per_step=1,
+    )
+    
+    await agent.run()
+
+
+def get_chrome_debug_pid():
+    """获取带有调试端口的Chrome进程PID"""
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            if proc.info['name'] and 'chrome' in proc.info['name'].lower():
+                cmdline = ' '.join(proc.info['cmdline'] or [])
+                if 'remote-debugging-port=9222' in cmdline:
+                    return proc.info['pid']
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return None
+
+async def run_with_browser_pid():
+    """通过PID连接到已开启的Chrome"""
+    chrome_pid = get_chrome_debug_pid()
+    
+    if not chrome_pid:
+        print("❌ 未找到带有调试端口的Chrome进程")
+        print("请先启动: /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222")
+        return
+    
+    print(f"✅ 找到Chrome进程，PID: {chrome_pid}")
+    
+    browser_session = BrowserSession(browser_pid=chrome_pid)
+    
+    agent = Agent(
+        task=(
+            '在当前已登录的浏览器中执行以下操作：'
+            '1. 导航到 https://family.demo.sensorsdata.cn/dashboard/?project=EbizDemo&product=sbp_family&id=414&dash_type=lego'
+            '2. 在顶部绿色导航栏中找到"分析"菜单项并点击它'
+            '3. 在弹出的下拉菜单中，在"行为分析"部分找到"事件分析"选项并点击'
+            '4. 等待进入事件分析页面，页面加载完成后'
+            '5. 在页面底部找到绿色的"查询"按钮并点击它'
+        ),
+        llm=ChatDeepSeek(
+            base_url='https://api.deepseek.com/v1',
+            model='deepseek-reasoner',
+            api_key=SecretStr(api_key),
+        ),
+        browser_session=browser_session,
+        use_vision=False,
+        max_failures=3,
+        max_actions_per_step=1,
+    )
+    
+    await agent.run()
+
+
 if __name__ == '__main__':
-	# 选择运行方案
-	print("选择运行方案:")
-	print("1. 默认方案（可能需要登录）")
-	print("2. 手动登录辅助方案")
+	print("🚀 启动方案选择:")
+	print("1. 方案一：自动启动浏览器（需要登录）")
+	print("2. 方案二：连接到已打开的浏览器（需要先手动启动Chrome）")
 	
 	choice = input("请输入选择 (1/2): ").strip()
 	
 	if choice == "2":
-		asyncio.run(run_with_manual_login())
+		print("\n📋 使用方案二的步骤:")
+		print("1. 请先在终端执行以下命令启动Chrome:")
+		print("   /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome \\")
+		print("     --remote-debugging-port=9222 \\")
+		print("     --user-data-dir=/tmp/chrome-sensorsdata")
+		print("\n2. 在打开的浏览器中手动登录神策数据")
+		print("3. 登录完成后，按回车继续...")
+		input()
+		
+		asyncio.run(run_with_existing_browser())
 	else:
 		asyncio.run(run_sensorsdata_analysis())
