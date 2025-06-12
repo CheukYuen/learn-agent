@@ -33,7 +33,7 @@ graph TD
     
     E --> F{"🔍 分类结果判断"}
     
-    F -->|aladdin_error| G["🌉 Aladdin专项分析<br/>aladdin-error-prompt.md"]
+    F -->|uni_error| G["🌉 Uni专项分析<br/>uni-error-prompt.md"]
     F -->|javascript_error| H["💻 JavaScript专项分析<br/>javascript-error-prompt.md"]
     F -->|backend_api_error| I["🖥️ 后端API专项分析<br/>backend-api-error-prompt.md"]
     F -->|其他类型| J["📋 通用分析<br/>analysis-prompt.md"]
@@ -98,7 +98,7 @@ sequenceDiagram
     participant User as 👤 用户
     participant Workflow as 🔄 analyze_alert()
     participant Classifier as 🧠 分类器
-    participant Aladdin as 🌉 Aladdin分析器
+    participant Uni as 🌉 Uni分析器
     participant JS as 💻 JavaScript分析器
     participant API as 🖥️ API分析器
     participant Generic as 📋 通用分析器
@@ -113,10 +113,10 @@ sequenceDiagram
     
     Note over Workflow: 阶段2: 专项分析路由
     
-    alt category == "aladdin_error"
-        Workflow->>Aladdin: 告警详情 + aladdin-error-prompt.md
-        Aladdin->>Aladdin: 错误码映射 (10001-10019)
-        Aladdin-->>Workflow: <aladdin_analysis><br/>错误码解释 + 修复建议
+    alt category == "uni_error"
+        Workflow->>Uni: 告警详情 + uni-error-prompt.md
+        Uni->>Uni: 错误码映射 (10001-10019)
+        Uni-->>Workflow: <uni_analysis><br/>错误码解释 + 修复建议
     
     else category == "javascript_error"
         Workflow->>JS: 告警详情 + javascript-error-prompt.md
@@ -145,7 +145,7 @@ sequenceDiagram
 ```mermaid
 graph LR
     subgraph "输入层"
-        A1["📱 Aladdin告警"]
+        A1["📱 Uni告警"]
         A2["💻 JavaScript告警"] 
         A3["🖥️ API告警"]
         A4["❓ 其他告警"]
@@ -156,7 +156,7 @@ graph LR
     end
     
     subgraph "分析层"
-        C1["🌉 Aladdin专家<br/>aladdin-error-prompt.md<br/>错误码: 10001-10019"]
+        C1["🌉 Uni专家<br/>uni-error-prompt.md<br/>错误码: 10001-10019"]
         C2["💻 JavaScript专家<br/>javascript-error-prompt.md<br/>堆栈分析 + 代码扫描"]
         C3["🖥️ API专家<br/>backend-api-error-prompt.md<br/>HTTP分析 + 代码扫描"]
         C4["📋 通用专家<br/>analysis-prompt.md<br/>兜底分析"]
@@ -171,7 +171,7 @@ graph LR
     A3 --> B  
     A4 --> B
     
-    B -->|aladdin_error| C1
+    B -->|uni_error| C1
     B -->|javascript_error| C2
     B -->|backend_api_error| C3
     B -->|unknown| C4
@@ -216,19 +216,19 @@ graph LR
 #### 输出格式
 ```xml
 <classification>
-<category>aladdin_error</category>
-<reasoning>发现Aladdin相关关键词和错误码特征</reasoning>
+<category>uni_error</category>
+<reasoning>发现Uni相关关键词和错误码特征</reasoning>
 <confidence>高</confidence>
 </classification>
 ```
 
 ### 阶段 2：专项分析 🔧
 
-#### Aladdin 错误处理 (`aladdin_error`)
-- **模板文件**: `crisis/aladdin-error-prompt.md`
+#### Uni 错误处理 (`uni_error`)
+- **模板文件**: `crisis/uni-error-prompt.md`
 - **核心特性**: 内置错误码映射 (10001-10019)
 - **处理逻辑**: 快速错误码解释和修复建议
-- **输出格式**: `<aladdin_analysis>`
+- **输出格式**: `<uni_analysis>`
 
 #### JavaScript 错误处理 (`javascript_error`)
 - **模板文件**: `crisis/javascript-error-prompt.md`
@@ -271,7 +271,7 @@ graph LR
 
 | 类型 | 描述 | 关键特性 | 触发关键词 |
 |------|------|----------|------------|
-| `aladdin_error` | Aladdin JS Bridge 通信错误 | 内置错误码映射 (10001-10019) | aladdin, bridge, 桥接, 移动端 |
+| `uni_error` | Uni JS Bridge 通信错误 | 内置错误码映射 (10001-10019) | uni, bridge, 桥接, 移动端 |
 | `javascript_error` | 前端 JavaScript 运行时错误 | 堆栈跟踪分析 | JavaScript, JS, TypeError, ReferenceError |
 | `backend_api_error` | 服务端 API 系统错误 | HTTP 状态分析 | API, 接口, 服务器, 数据库, 超时 |
 
@@ -282,10 +282,10 @@ graph LR
 ```python
 from crisis.workflow import analyze_alert
 
-# Aladdin 错误示例
+# Uni 错误示例
 alert_details = """
 告警时间: 2024-01-15 14:30:22
-错误信息: Aladdin bridge call failed with error code 10015
+错误信息: Uni bridge call failed with error code 10015
 设备型号: iPhone 14 Pro
 """
 
@@ -302,7 +302,7 @@ print(result)
 python crisis/example_usage.py
 
 # 测试特定类型
-python crisis/example_usage.py aladdin
+python crisis/example_usage.py uni
 python crisis/example_usage.py javascript
 python crisis/example_usage.py backend
 ```
@@ -334,7 +334,7 @@ python crisis/example_usage.py backend
 - **主工作流**: `crisis/workflow.py`
 - **分类提示**: `crisis/alert-classification-prompt.md`
 - **专业分析提示**: 
-  - `crisis/aladdin-error-prompt.md`
+  - `crisis/uni-error-prompt.md`
   - `crisis/javascript-error-prompt.md`
   - `crisis/backend-api-error-prompt.md`
 - **测试示例**: `crisis/example_usage.py`

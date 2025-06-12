@@ -70,7 +70,7 @@ agent = AlertAnalysisAgent(
 ## Configuration Categories
 - **Error Codes**: System (10000-10099), Network (10100-10199), Database (10200-10299), Business Logic (10300-10399)
 - **Severity Levels**: 严重, 高, 中, 低, 信息
-- **Response Templates**: aladdin, database, network, resource
+- **Response Templates**: uni, database, network, resource
 - **System Components**: Database, network, storage, CPU, memory, services, etc.
 
 ## Project Structure

@@ -6,9 +6,9 @@
    - 包括：JavaScript运行时错误、前端脚本异常、浏览器兼容性问题等
    - 关键词：JavaScript、JS、script error、前端错误、客户端错误等
 
-2. **aladdin_error** - Aladdin JS Bridge相关错误  
-   - 包括：Aladdin库调用失败、JS Bridge通信异常、移动端桥接错误等
-   - 关键词：aladdin、bridge、桥接、移动端、app内嵌页面等
+2. **uni_error** - Uni JS Bridge相关错误  
+   - 包括：Uni库调用失败、JS Bridge通信异常、移动端桥接错误等
+   - 关键词：uni、bridge、桥接、移动端、app内嵌页面等
    - 通常包含特定错误码（如10015等）
 
 3. **backend_api_error** - 后端接口异常
@@ -24,7 +24,7 @@
 请按以下格式提供分类结果：
 
 <classification>
-<category>选择的类别（javascript_error/aladdin_error/backend_api_error）</category>
+<category>选择的类别（javascript_error/uni_error/backend_api_error）</category>
 <reasoning>
 简要说明分类依据，包括关键词识别和错误特征分析
 </reasoning>

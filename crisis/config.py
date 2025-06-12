@@ -19,7 +19,7 @@ ERROR_CODE_MAPPING = {
     "10012": "线程池耗尽",
     "10013": "缓存失效",
     "10014": "文件系统错误",
-    "10015": "aladdin请求失败",
+    "10015": "uni请求失败",
     
     # 网络错误 (10100-10199)
     "10101": "DNS解析失败",
@@ -46,9 +46,9 @@ ERROR_CODE_MAPPING = {
 # 历史数据知识库示例
 KNOWLEDGE_BASE = {
     "incident_001": {
-        "description": "aladdin服务请求超时，用户无法登录",
-        "cause": "aladdin服务器负载过高，响应时间超过阈值",
-        "solution": "重启aladdin服务，优化数据库查询",
+        "description": "uni服务请求超时，用户无法登录",
+        "cause": "uni服务器负载过高，响应时间超过阈值",
+        "solution": "重启uni服务，优化数据库查询",
         "prevention": "增加服务器监控，设置自动扩容",
         "severity": "高",
         "duration": "2小时"
@@ -109,7 +109,7 @@ SYSTEM_COMPONENTS = [
     "网络", "负载均衡", "CDN", "DNS", "防火墙",
     "存储", "磁盘", "文件系统", "备份",
     "CPU", "内存", "内存泄露", "线程",
-    "aladdin", "API", "微服务", "容器", "Docker", "Kubernetes",
+    "uni", "API", "微服务", "容器", "Docker", "Kubernetes",
     "缓存", "消息队列", "MQ", "Kafka", "RabbitMQ",
     "认证", "权限", "SSL", "证书",
     "监控", "日志", "告警"
@@ -126,17 +126,17 @@ DEFAULT_CONFIG = {
 
 # 响应措施模板
 RESPONSE_TEMPLATES = {
-    "aladdin": {
+    "uni": {
         "immediate": [
-            "检查aladdin服务状态和健康检查端点",
-            "查看aladdin服务日志，识别错误模式",
-            "验证aladdin服务依赖的下游服务状态",
-            "如有必要，重启aladdin服务实例"
+            "检查uni服务状态和健康检查端点",
+            "查看uni服务日志，识别错误模式",
+            "验证uni服务依赖的下游服务状态",
+            "如有必要，重启uni服务实例"
         ],
         "long_term": [
-            "优化aladdin服务的错误处理和重试机制",
+            "优化uni服务的错误处理和重试机制",
             "实施服务熔断和降级策略",
-            "增强aladdin服务监控和告警",
+            "增强uni服务监控和告警",
             "进行负载测试和性能优化"
         ]
     },

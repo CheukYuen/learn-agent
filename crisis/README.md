@@ -19,8 +19,8 @@
 - **处理方式**: 详细分析错误类型、堆栈信息，并标识需要代码调查的范围
 - **输出格式**: 包含错误类型、堆栈分析、原因分析、代码调查建议等
 
-#### 2. Aladdin Error (`aladdin_error`)  
-- **适用场景**: Aladdin JS Bridge相关错误
+#### 2. Uni Error (`uni_error`)  
+- **适用场景**: Uni JS Bridge相关错误
 - **处理方式**: 专门解释错误码含义，提供快速修复方案
 - **特色功能**: 内置常见错误码映射（10001-10019）
 - **输出格式**: 错误码解释、可能原因、快速修复、升级建议
@@ -44,7 +44,7 @@
 ### 提示词模板
 
 - `alert-classification-prompt.md` - 告警分类提示词
-- `aladdin-error-prompt.md` - Aladdin错误专项分析
+- `uni-error-prompt.md` - Uni错误专项分析
 - `javascript-error-prompt.md` - JavaScript错误专项分析  
 - `backend-api-error-prompt.md` - 后端API错误专项分析
 - `analysis-prompt.md` - 通用分析提示词（备用）
@@ -63,7 +63,7 @@ from workflow import analyze_alert
 # 分析告警
 alert_details = """
 告警时间: 2024-01-15 14:30:22
-错误信息: Aladdin bridge call failed with error code 10015
+错误信息: Uni bridge call failed with error code 10015
 ...
 """
 
@@ -78,7 +78,7 @@ print(result)
 python example_usage.py
 
 # 运行特定类型测试
-python example_usage.py aladdin     # Aladdin错误测试
+python example_usage.py uni     # Uni错误测试
 python example_usage.py javascript  # JavaScript错误测试
 python example_usage.py backend     # 后端API错误测试
 ```
@@ -90,15 +90,15 @@ python example_usage.py backend     # 后端API错误测试
 ### 1. 告警分类结果
 ```
 === 告警分类结果 ===
-类别: aladdin_error
+类别: uni_error
 置信度: 高
-分类依据: 告警信息中包含"Aladdin bridge"和错误码"10015"...
+分类依据: 告警信息中包含"Uni bridge"和错误码"10015"...
 ```
 
 ### 2. 专项分析结果
 根据不同类别，输出相应的结构化分析：
 
-- **Aladdin错误**: 错误码解释、原因分析、快速修复
+- **Uni错误**: 错误码解释、原因分析、快速修复
 - **JavaScript错误**: 错误类型、堆栈分析、代码调查建议
 - **后端API错误**: 状态码分析、影响评估、根因分析
 

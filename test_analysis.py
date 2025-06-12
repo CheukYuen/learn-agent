@@ -23,22 +23,22 @@ def test_basic_functionality():
     print(f"📚 知识库包含 {len(agent.knowledge_base)} 个历史事件")
     print(f"🔢 错误码库包含 {len(agent.error_code_mapping)} 个错误码\n")
 
-def test_aladdin_alert():
-    """测试 aladdin 服务告警"""
+def test_uni_alert():
+    """测试 uni 服务告警"""
     print("=" * 80)
-    print("🧪 测试用例 1: aladdin 服务异常")
+    print("🧪 测试用例 1: uni 服务异常")
     print("=" * 80)
     
     agent = AlertAnalysisAgent()
     
     alert = """
-    系统告警: aladdin服务异常
+    系统告警: uni服务异常
     时间: 2024-01-15 14:30:00
     错误码: 10015
     告警级别: HIGH
-    描述: aladdin请求超时，连接失败，用户无法登录
+    描述: uni请求超时，连接失败，用户无法登录
     影响: 用户无法正常访问相关功能，业务中断
-    服务器: prod-aladdin-01
+    服务器: prod-uni-01
     """
     
     print("📝 告警详情:")
@@ -206,7 +206,7 @@ def main():
         test_basic_functionality()
         
         # 测试各种告警类型
-        test_aladdin_alert()
+        test_uni_alert()
         test_database_alert() 
         test_resource_alert()
         test_network_alert()

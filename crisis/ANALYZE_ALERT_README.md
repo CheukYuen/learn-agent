@@ -8,7 +8,7 @@ from crisis.workflow import analyze_alert
 # 输入告警详情
 alert_details = """
 告警时间: 2024-01-15 14:30:22
-错误信息: Aladdin bridge call failed with error code 10015
+错误信息: Uni bridge call failed with error code 10015
 设备型号: iPhone 14 Pro
 """
 
@@ -28,7 +28,7 @@ print(result)
 
 | 类型 | 触发关键词 | 专业特性 |
 |------|------------|----------|
-| **Aladdin错误** | aladdin, bridge, 桥接 | 错误码映射 (10001-10019) |
+| **Uni错误** | uni, bridge, 桥接 | 错误码映射 (10001-10019) |
 | **JavaScript错误** | JavaScript, JS, TypeError | 堆栈跟踪分析 |
 | **API错误** | API, 接口, 服务器, 超时 | HTTP状态分析 |
 
@@ -39,7 +39,7 @@ print(result)
 python crisis/example_usage.py
 
 # 测试特定类型  
-python crisis/example_usage.py aladdin
+python crisis/example_usage.py uni
 python crisis/example_usage.py javascript
 python crisis/example_usage.py backend
 ```
@@ -48,16 +48,16 @@ python crisis/example_usage.py backend
 
 ```
 === 告警分类结果 ===
-类别: aladdin_error
+类别: uni_error
 置信度: 高
-分类依据: 发现Aladdin错误码和移动端特征
+分类依据: 发现Uni错误码和移动端特征
 
 === 专项分析结果 ===
-<aladdin_analysis>
+<uni_analysis>
 错误码: 10015
 原因: 用户权限验证失败
 建议: 检查用户登录状态和权限配置
-</aladdin_analysis>
+</uni_analysis>
 ```
 
 ## 🔧 核心优势

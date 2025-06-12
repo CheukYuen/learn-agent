@@ -9,21 +9,21 @@
 
 from workflow import analyze_alert
 
-def test_aladdin_error():
-    """测试Aladdin错误分析"""
+def test_uni_error():
+    """测试Uni错误分析"""
     alert_details = """
     告警时间: 2024-01-15 14:30:22
     告警级别: ERROR
-    错误信息: Aladdin bridge call failed with error code 10015
+    错误信息: Uni bridge call failed with error code 10015
     用户ID: user_12345
     设备型号: iPhone 14 Pro
     APP版本: 3.2.1
     操作系统: iOS 16.1
-    错误详情: 调用aladdin.getUserInfo()时返回错误码10015，无法获取用户信息
+    错误详情: 调用uni.getUserInfo()时返回错误码10015，无法获取用户信息
     """
     
     print("=" * 60)
-    print("测试 Aladdin 错误分析")
+    print("测试 Uni 错误分析")
     print("=" * 60)
     result = analyze_alert(alert_details)
     print("\n分析结果:")
@@ -87,18 +87,18 @@ if __name__ == "__main__":
     
     if len(sys.argv) > 1:
         test_type = sys.argv[1].lower()
-        if test_type == "aladdin":
-            test_aladdin_error()
+        if test_type == "uni":
+            test_uni_error()
         elif test_type == "javascript":
             test_javascript_error()
         elif test_type == "backend":
             test_backend_api_error()
         else:
             print(f"未知测试类型: {test_type}")
-            print("可用选项: aladdin, javascript, backend")
+            print("可用选项: uni, javascript, backend")
     else:
         # 运行所有测试
-        test_aladdin_error()
+        test_uni_error()
         print("\n" + "="*80 + "\n")
         test_javascript_error()
         print("\n" + "="*80 + "\n")

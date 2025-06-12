@@ -145,7 +145,7 @@ class AlertAnalysisAgent:
             "permission": "权限验证问题",
             "配置": "系统配置错误或缺失",
             "config": "配置相关问题",
-            "aladdin": "aladdin服务相关问题",
+            "uni": "uni服务相关问题",
             "SSL": "SSL证书或安全连接问题",
             "DNS": "域名解析问题",
             "负载": "系统负载过高",
@@ -272,10 +272,10 @@ class AlertAnalysisAgent:
         alert_lower = alert_details.lower()
         template_used = False
         
-        # 检查是否是aladdin相关问题
-        if "aladdin" in alert_lower:
-            immediate_measures.extend(RESPONSE_TEMPLATES["aladdin"]["immediate"])
-            long_term_measures.extend(RESPONSE_TEMPLATES["aladdin"]["long_term"])
+        # 检查是否是uni相关问题
+        if "uni" in alert_lower:
+            immediate_measures.extend(RESPONSE_TEMPLATES["uni"]["immediate"])
+            long_term_measures.extend(RESPONSE_TEMPLATES["uni"]["long_term"])
             template_used = True
         
         # 检查是否是数据库相关问题
@@ -427,16 +427,16 @@ def main():
     # 初始化智能体
     agent = AlertAnalysisAgent()
     
-    # 测试用例1: aladdin服务异常
+    # 测试用例1: uni服务异常
     print("=" * 60)
-    print("测试用例1: aladdin服务异常")
+    print("测试用例1: uni服务异常")
     print("=" * 60)
     
     test_alert_1 = """
-    系统告警: aladdin服务异常
+    系统告警: uni服务异常
     时间: 2024-01-15 14:30:00
     错误码: 10015
-    描述: aladdin请求超时，连接失败，用户无法登录
+    描述: uni请求超时，连接失败，用户无法登录
     影响: 用户无法正常访问相关功能，业务中断
     """
     

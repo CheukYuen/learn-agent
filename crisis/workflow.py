@@ -79,9 +79,9 @@ def analyze_alert(alert_details: str) -> str:
     # Step 3: Apply specialized analysis based on category
     print(f"\n=== {category.upper()} 专项分析阶段 ===")
     
-    if category == 'aladdin_error':
-        # For Aladdin errors, just return error code explanation
-        with open('crisis/aladdin-error-prompt.md', 'r', encoding='utf-8') as f:
+    if category == 'uni_error':
+        # For Uni errors, just return error code explanation
+        with open('crisis/uni-error-prompt.md', 'r', encoding='utf-8') as f:
             prompt = f.read().replace('{{ALERT_DETAILS}}', alert_details)
         analysis_result = llm_call(prompt)
         

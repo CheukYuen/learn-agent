@@ -26,11 +26,11 @@ Crisis Agent 是一个智能告警分析系统，采用**两阶段流水线架�
 
 #### 分类系统
 - **分类提示**：[crisis/alert-classification-prompt.md](mdc:crisis/alert-classification-prompt.md)
-  - 支持分类：`javascript_error`, `aladdin_error`, `backend_api_error`
+  - 支持分类：`javascript_error`, `uni_error`, `backend_api_error`
   - 输出结构化 XML 格式
 
 #### 专业分析提示
-- **Aladdin 错误**：[crisis/aladdin-error-prompt.md](mdc:crisis/aladdin-error-prompt.md)
+- **Uni 错误**：[crisis/uni-error-prompt.md](mdc:crisis/uni-error-prompt.md)
 - **JavaScript 错误**：[crisis/javascript-error-prompt.md](mdc:crisis/javascript-error-prompt.md)  
 - **后端 API 错误**：[crisis/backend-api-error-prompt.md](mdc:crisis/backend-api-error-prompt.md)
 
@@ -38,7 +38,7 @@ Crisis Agent 是一个智能告警分析系统，采用**两阶段流水线架�
 
 | 类型 | 用途 | 关键特性 | 关键词 |
 |------|------|----------|--------|
-| `aladdin_error` | Aladdin JS Bridge 错误 | 内置错误码映射 (10001-10019) | aladdin, bridge, 桥接, 移动端 |
+| `uni_error` | Uni JS Bridge 错误 | 内置错误码映射 (10001-10019) | uni, bridge, 桥接, 移动端 |
 | `javascript_error` | 前端 JavaScript 运行时错误 | 堆栈跟踪分析 | JavaScript, JS, TypeError, ReferenceError |
 | `backend_api_error` | 服务端 API 系统错误 | HTTP 状态分析 | API, 接口, 服务器, 数据库, 超时 |
 
@@ -60,5 +60,5 @@ Crisis Agent 是一个智能告警分析系统，采用**两阶段流水线架�
 
 1. [crisis/workflow.py](mdc:crisis/workflow.py) - 主工作流逻辑
 2. [crisis/alert-classification-prompt.md](mdc:crisis/alert-classification-prompt.md) - 分类规则
-3. [crisis/*-error-prompt.md](mdc:crisis/aladdin-error-prompt.md) - 专业分析逻辑
+3. [crisis/*-error-prompt.md](mdc:crisis/uni-error-prompt.md) - 专业分析逻辑
 4. [crisis/example_usage.py](mdc:crisis/example_usage.py) - 测试验证
