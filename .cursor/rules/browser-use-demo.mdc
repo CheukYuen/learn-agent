@@ -1,5 +1,119 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Browser-Use Demo 项目指南
+
+## 项目概述
+
+这是一个使用Browser-Use库进行自动化浏览器操作的演示项目，主要用于神策数据分析页面的自动化操作。
+
+## 核心文件
+
+- [deepseek-r1.py](mdc:browser-use-demo/deepseek-r1.py) - 主要实现文件，包含多种浏览器连接方案
+- [requirements.txt](mdc:browser-use-demo/requirements.txt) - 项目依赖
+- [LOGIN_SOLUTIONS.md](mdc:browser-use-demo/LOGIN_SOLUTIONS.md) - 登录解决方案文档
+- [README.md](mdc:browser-use-demo/README.md) - 项目说明文档
+
+## 浏览器连接方案
+
+### 方案一：自动启动浏览器（推荐）
+```python
+browser_session = BrowserSession(
+    user_data_dir='~/.config/browseruse/profiles/sensorsdata',
+    headless=False,
+    executable_path='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+)
+```
+**特点**：
+- 自动启动Chrome浏览器
+- 使用专用用户数据目录保持登录状态
+- 首次运行需要手动登录，后续运行自动保持登录
+- 适合Chrome 137+版本，避免版本冲突
+
+### 方案二：连接已打开的浏览器
+#### 2A. CDP连接方式
+```python
+browser_session = BrowserSession(
+    cdp_url="http://localhost:9222"
+)
+```
+
+#### 2B. PID连接方式
+```python
+browser_session = BrowserSession(browser_pid=chrome_pid)
+```
+
+**使用步骤**：
+1. 手动启动Chrome：`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-sensorsdata`
+2. 手动登录神策数据页面
+3. 运行Agent连接到已登录的浏览器
+
+## 版本兼容性注意事项
+
+### Chrome版本问题
+- **Chrome 137**: 用户当前使用版本
+- **Playwright Chromium**: 通常比稳定版Chrome更新
+- **关键原则**: 浏览器版本必须≥创建user_data_dir时的版本
+
+### 避免版本冲突
+1. 使用版本特定的profile目录：`sensorsdata-chrome137`
+2. 坚持使用同一浏览器版本
+3. 如遇"Failed to parse Extensions"错误，删除profile目录重新开始
+
+## 最佳实践
+
+### 安全考虑
+- 使用专用profile目录，避免影响个人Chrome
+- 限制域名访问：`allowed_domains=['*.sensorsdata.cn']`
+- 敏感数据处理：使用`sensitive_data`参数
+
+### 性能优化
+- 使用`keep_alive=True`重用浏览器会话
+- 设置合理的`max_failures`和`max_actions_per_step`
+- 根据需要开启/关闭`use_vision`
+
+### 调试技巧
+- 使用`headless=False`观察浏览器操作
+- 检查Chrome进程：`ps aux | grep chrome | grep remote-debugging-port`
+- 验证登录状态：检查profile目录是否存在
+
+## 常见问题解决
+
+### Chrome路径问题
+```bash
+# 检查Chrome是否存在
+ls -la "/Applications/Google Chrome.app/Contents/MacOS/"
+
+# 自动检测Chrome路径
+find /Applications -name "*Chrome*.app" -type d 2>/dev/null
+```
+
+### 登录状态丢失
+- 确保使用相同的`user_data_dir`
+- 检查profile目录权限
+- 避免混用不同版本浏览器
+
+### 连接失败
+- 确认Chrome启动时包含`--remote-debugging-port=9222`
+- 检查端口是否被占用：`lsof -i :9222`
+- 验证CDP URL可访问：`curl http://localhost:9222/json`
+
+## 技术栈
+
+- **Browser-Use**: 浏览器自动化框架
+- **DeepSeek**: LLM模型供应商
+- **Playwright**: 底层浏览器控制
+- **psutil**: 系统进程管理
+- **神策数据**: 目标分析平台
+
+## 项目结构
+```
+browser-use-demo/
+├── deepseek-r1.py          # 主实现文件
+├── requirements.txt        # 依赖管理
+├── LOGIN_SOLUTIONS.md      # 登录方案文档
+├── README.md              # 项目说明
+└── .env                   # 环境变量（需要DEEPSEEK_API_KEY）
+```
