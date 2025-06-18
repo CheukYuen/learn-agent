@@ -1,0 +1,296 @@
+[
+  {
+    "alert_text": "用户反馈点击买入按钮后页面无响应，等待30秒后App闪退",
+    "category": "界面异常类",
+    "confidence": 0.7,
+    "reason": "匹配到关键词: 按钮, 页面",
+    "response_time_ms": 0.07,
+    "timestamp": "2025-06-18T17:21:18.329057",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "闪退"
+        ]
+      },
+      "性能问题类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "等待"
+        ]
+      },
+      "界面异常类": {
+        "keyword_matches": 2,
+        "pattern_matches": 2,
+        "matched_keywords": [
+          "按钮",
+          "页面"
+        ]
+      }
+    }
+  },
+  {
+    "alert_text": "交易页面加载超过1分钟，用户无法查看持仓信息",
+    "category": "功能异常类",
+    "confidence": 0.6,
+    "reason": "匹配到关键词: 无法",
+    "response_time_ms": 0.05,
+    "timestamp": "2025-06-18T17:21:18.329119",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "无法"
+        ]
+      },
+      "性能问题类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "加载"
+        ]
+      },
+      "界面异常类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "页面"
+        ]
+      }
+    }
+  },
+  {
+    "alert_text": "支付密码输入后提示网络异常，无法完成支付",
+    "category": "功能异常类",
+    "confidence": 0.7,
+    "reason": "匹配到关键词: 无法, 异常",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329171",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 2,
+        "pattern_matches": 2,
+        "matched_keywords": [
+          "无法",
+          "异常"
+        ]
+      },
+      "性能问题类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "界面异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      }
+    }
+  },
+  {
+    "alert_text": "首页股票价格显示错位，数字重叠无法看清",
+    "category": "界面异常类",
+    "confidence": 0.8,
+    "reason": "匹配到关键词: 显示, 错位, 重叠",
+    "response_time_ms": 0.05,
+    "timestamp": "2025-06-18T17:21:18.329221",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "无法"
+        ]
+      },
+      "性能问题类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "界面异常类": {
+        "keyword_matches": 3,
+        "pattern_matches": 3,
+        "matched_keywords": [
+          "显示",
+          "错位",
+          "重叠"
+        ]
+      }
+    }
+  },
+  {
+    "alert_text": "登录时指纹识别失败，提示系统错误",
+    "category": "功能异常类",
+    "confidence": 0.7,
+    "reason": "匹配到关键词: 失败, 错误",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329267",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 2,
+        "pattern_matches": 2,
+        "matched_keywords": [
+          "失败",
+          "错误"
+        ]
+      },
+      "性能问题类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "界面异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      }
+    }
+  },
+  {
+    "alert_text": "K线图显示空白，页面布局混乱",
+    "category": "界面异常类",
+    "confidence": 0.9,
+    "reason": "匹配到关键词: 显示, 布局, 页面",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329310",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "性能问题类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "界面异常类": {
+        "keyword_matches": 4,
+        "pattern_matches": 4,
+        "matched_keywords": [
+          "显示",
+          "布局",
+          "页面",
+          "空白"
+        ]
+      }
+    }
+  },
+  {
+    "alert_text": "转账功能响应很慢，点击后需要等待很久",
+    "category": "性能问题类",
+    "confidence": 0.7,
+    "reason": "匹配到关键词: 慢, 等待",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329357",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "性能问题类": {
+        "keyword_matches": 2,
+        "pattern_matches": 2,
+        "matched_keywords": [
+          "慢",
+          "等待"
+        ]
+      },
+      "界面异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      }
+    }
+  },
+  {
+    "alert_text": "用户头像显示不正常，文字被截断",
+    "category": "界面异常类",
+    "confidence": 0.74,
+    "reason": "匹配到关键词: 显示, 文字, 截断",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329403",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "性能问题类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "界面异常类": {
+        "keyword_matches": 3,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "显示",
+          "文字",
+          "截断"
+        ]
+      }
+    }
+  },
+  {
+    "alert_text": "下单时提示余额不足，但实际余额充足",
+    "category": "未知类型",
+    "confidence": 0.3,
+    "reason": "未匹配到已知关键词",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329448",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "性能问题类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      },
+      "界面异常类": {
+        "keyword_matches": 0,
+        "pattern_matches": 0,
+        "matched_keywords": []
+      }
+    }
+  },
+  {
+    "alert_text": "App启动后卡在加载页面，无法进入主界面",
+    "category": "界面异常类",
+    "confidence": 0.7,
+    "reason": "匹配到关键词: 界面, 页面",
+    "response_time_ms": 0.04,
+    "timestamp": "2025-06-18T17:21:18.329498",
+    "details": {
+      "功能异常类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "无法"
+        ]
+      },
+      "性能问题类": {
+        "keyword_matches": 1,
+        "pattern_matches": 1,
+        "matched_keywords": [
+          "加载"
+        ]
+      },
+      "界面异常类": {
+        "keyword_matches": 2,
+        "pattern_matches": 2,
+        "matched_keywords": [
+          "界面",
+          "页面"
+        ]
+      }
+    }
+  }
+]
