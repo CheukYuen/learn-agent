@@ -1,0 +1,18 @@
+{
+  "total_alerts": 5,
+  "category_distribution": {
+    "功能异常类": 3,
+    "性能问题类": 1,
+    "界面异常类": 1
+  },
+  "category_percentages": {
+    "功能异常类": 60.0,
+    "性能问题类": 20.0,
+    "界面异常类": 20.0
+  },
+  "avg_confidence": 0.93,
+  "avg_response_time_ms": 8914.98,
+  "high_confidence_rate": 100.0,
+  "error_rate": 0.0,
+  "success_rate": 100.0
+}
