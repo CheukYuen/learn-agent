@@ -12,6 +12,9 @@ Large Language Models: Capabilities and Limitations
 3. Anthropic Aircraft 
 4. Google notebookLM  多智能体
 
+无大模型
+1. Boa Erica
+
 ## 2. LLM 原理
 notebook LLM
 
